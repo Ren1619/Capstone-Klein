@@ -116,5 +116,5 @@
 @endsection
 
 @php
-    $activePage = 'feedback';
+    $activePage = 'feedbacks';
 @endphp

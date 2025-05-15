@@ -50,7 +50,8 @@
 
                     <!-- Add Appointment Button -->
                     <button id="addAppointmentBtn"
-                        class="bg-white rounded-lg p-3.5 flex items-center gap-3.5 hover:bg-[#F91D7C]/10 shadow-sm cursor-pointer transition-colors w-full">
+                        class="bg-white rounded-lg p-3.5 flex items-center gap-3.5 hover:bg-[#F91D7C]/10 shadow-sm cursor-pointer transition-colors w-full"
+                        onclick="openAppointmentModalDirect()">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-[#F91D7C]/30 rounded flex justify-center items-center">
                             <div class="w-6 h-6">
                                 <img class="w-full h-full object-cover" src="{{ asset('icons/add_appointment_icon.svg') }}"
@@ -204,8 +205,8 @@
                                         @endphp
                                         <div data-date="{{ $dateStr }}"
                                             class="calendar-day h-8 flex justify-center items-center relative cursor-pointer
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $isActive ? 'bg-[#FF006E]' : '' }}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $isSelected ? 'selected-date' : '' }}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $isActive ? 'bg-[#FF006E]' : '' }}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $isSelected ? 'selected-date' : '' }}"
                                             onclick="selectDate('{{ $dateStr }}', {{ $day }})">
                                             <span class="text-xs z-10 {{ $isActive ? 'font-medium ' : '' }}">{{ $day }}</span>
 
@@ -259,6 +260,48 @@
     @include('inventory.modals.addProduct')
     @include('services.modals.add-modal')
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to close modals consistently
+            function closeAllModals() {
+                const modals = [
+                    document.getElementById('clinicModal'),
+                    document.getElementById('appointmentModal'),
+                    document.getElementById('staffModal'),
+                    document.getElementById('patientModal'),
+                    document.getElementById('productModal'),
+                    document.getElementById('serviceModal')
+                ];
+                
+                modals.forEach(modal => {
+                    if (modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+                document.body.style.overflow = 'auto';
+            }
+
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                const modals = document.querySelectorAll('.modal-backdrop');
+                modals.forEach(modal => {
+                    if (e.target === modal) {
+                        closeAllModals();
+                    }
+                });
+            });
+
+            // Close modals on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+
+            // Make closeAllModals available globally
+            window.closeAllModals = closeAllModals;
+        });
+    </script>
 
 @endsection
 
@@ -450,36 +493,4 @@
         }
     });
 
-
-    // Add this script to your dashboard.blade.php or in a separate JS file included in the dashboard
-    document.addEventListener('DOMContentLoaded', function () {
-        // Find the Add Appointment button
-        const addAppointmentBtn = document.getElementById('addAppointmentBtn');
-
-        if (addAppointmentBtn) {
-            console.log('Dashboard: Add Appointment button found');
-
-            addAppointmentBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-
-                // Find the modal directly
-                const modal = document.getElementById('appointmentModal');
-
-                if (modal) {
-                    // Open the modal directly
-                    console.log('Dashboard: Opening modal directly');
-                    modal.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                } else if (window.openAppointmentModal) {
-                    // Or use the global function if available
-                    console.log('Dashboard: Opening modal via global function');
-                    window.openAppointmentModal();
-                } else {
-                    console.error('Dashboard: Modal not found and no global function available');
-                }
-            });
-        } else {
-            console.error('Dashboard: Add Appointment button not found');
-        }
-    });
 </script>
