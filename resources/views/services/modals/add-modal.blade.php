@@ -2,7 +2,8 @@
 <div id="addCategoryModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-full p-4">
         <!-- Modal Background Overlay -->
-        <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" onclick="closeCategoryModalDirect()"></div>
+        <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" onclick="closeCategoryModalDirect()">
+        </div>
 
         <!-- Modal Content -->
         <div class="relative bg-white rounded-lg shadow-xl w-full sm:max-w-md mx-auto z-10 transform transition-all">
@@ -25,7 +26,7 @@
                 <form id="addCategoryForm" class="modal-form">
                     <!-- Hidden field for storing category ID when editing -->
                     <input type="hidden" name="id" id="categoryId" value="">
-                    
+
                     <!-- Required fields note -->
                     <div class="mb-4">
                         <p class="text-sm text-gray-600">
@@ -80,7 +81,8 @@
 <div id="addServiceModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-full p-4">
         <!-- Modal Background Overlay -->
-        <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" onclick="closeServiceModalDirect()"></div>
+        <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" onclick="closeServiceModalDirect()">
+        </div>
 
         <!-- Modal Content -->
         <div class="relative bg-white rounded-lg shadow-xl w-full sm:max-w-md mx-auto z-10 transform transition-all">
@@ -103,7 +105,7 @@
                 <form id="addServiceForm" class="modal-form" method="POST" action="{{ route('services.store') }}">
                     @csrf
                     <div id="methodField"></div>
-                    
+
                     <!-- Hidden field for storing service ID when editing -->
                     <input type="hidden" name="id" id="serviceId" value="">
 
@@ -209,42 +211,63 @@
         </div>
     </div>
 </div>
+<style>
+    /* Fix for dropdown styling */
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: white;
+    }
+
+    /* Fix for dropdown extending vertically */
+    select[size] {
+        height: auto !important;
+    }
+
+    /* Make sure dropdown options display properly */
+    select option {
+        background-color: white;
+        color: #333;
+        padding: 6px 8px;
+    }
+</style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Modal elements
         const categoryModal = document.getElementById('addCategoryModal');
         const serviceModal = document.getElementById('addServiceModal');
         const serviceForm = document.getElementById('addServiceForm');
         const categoryForm = document.getElementById('addCategoryForm');
         const methodField = document.getElementById('methodField');
-        
+
         // Status toggle functionality
         const statusToggle = document.getElementById('statusToggle');
         const statusHidden = document.getElementById('statusHidden');
-        
+
         if (statusToggle && statusHidden) {
-            statusToggle.addEventListener('change', function() {
+            statusToggle.addEventListener('change', function () {
                 statusHidden.value = this.checked ? 'active' : 'inactive';
             });
         }
-        
+
         // Category form submission
         if (categoryForm) {
-            categoryForm.addEventListener('submit', function(e) {
+            categoryForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                
+
                 const formData = new FormData(categoryForm);
                 const categoryId = formData.get('id');
                 const url = categoryId ? `/api/service-categories/${categoryId}` : '/api/service-categories';
                 const method = categoryId ? 'PUT' : 'POST';
-                
+
                 // Show loading state
                 const saveBtn = categoryForm.querySelector('.save-btn');
                 const originalText = saveBtn.textContent;
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving...';
-                
+
                 fetch(url, {
                     method: method,
                     headers: {
@@ -256,71 +279,98 @@
                         description: formData.get('description')
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        // Reload the page to show updated data
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                })
-                .finally(() => {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = originalText;
-                    closeCategoryModalDirect();
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    })
+                    .finally(() => {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = originalText;
+                        closeCategoryModalDirect();
+                    });
             });
         }
-        
+        function loadServiceCategories() {
+            const categorySelect = document.getElementById('serviceCategory');
+            if (!categorySelect) return;
+
+            // Remove any size attribute that might cause vertical expansion
+            categorySelect.removeAttribute('size');
+
+            // Clear options except the first placeholder
+            while (categorySelect.options.length > 1) {
+                categorySelect.remove(1);
+            }
+
+            // Fetch categories
+            fetch('/api/categories/type/service')
+                .then(response => response.json())
+                .then(categories => {
+                    // Populate dropdown
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.category_ID;
+                        option.textContent = category.category_name;
+                        categorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching service categories:', error);
+                });
+        }
         // Function to set form for editing service
         function editServiceForm(service) {
             // Set hidden ID field
             document.getElementById('serviceId').value = service.service_ID;
-            
+
             // Update form fields
             document.getElementById('serviceName').value = service.name;
             document.getElementById('serviceCategory').value = service.category_ID;
             document.getElementById('servicePrice').value = service.price;
             document.getElementById('serviceDescription').value = service.description || '';
-            
+
             // Set status toggle
             const statusToggle = document.getElementById('statusToggle');
             const statusHidden = document.getElementById('statusHidden');
-            
+
             if (statusToggle && statusHidden) {
                 statusToggle.checked = service.status === 'active';
                 statusHidden.value = service.status;
             }
-            
+
             // Change form method to PUT
             methodField.innerHTML = '<input type="hidden" name="_method" value="PUT">';
             serviceForm.action = `/services/${service.service_ID}`;
-            
+
             // Update modal title and button text
             document.querySelector('#addServiceModal .modal-action').textContent = 'Edit';
             document.querySelector('#addServiceModal .save-btn').textContent = 'Update Service';
         }
-        
+
         // Global functions for modal handling
         // These are the core opening functions used by the direct functions below
-        window.openCategoryModal = function(mode = 'add', data = null) {
+        window.openCategoryModal = function (mode = 'add', data = null) {
             if (categoryModal) {
                 categoryModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
-                
+
                 const actionText = document.querySelector('#addCategoryModal .modal-action');
                 const saveBtn = document.querySelector('#addCategoryModal .save-btn');
-                
+
                 if (mode === 'edit' && data) {
                     actionText.textContent = 'Edit';
                     saveBtn.textContent = 'Update Category';
-                    
+
                     // Populate form fields
                     document.getElementById('categoryId').value = data.id;
                     document.getElementById('categoryName').value = data.name;
@@ -328,19 +378,19 @@
                 } else {
                     actionText.textContent = 'Add';
                     saveBtn.textContent = 'Save Category';
-                    
+
                     // Reset form
                     categoryForm.reset();
                     document.getElementById('categoryId').value = '';
                 }
             }
         };
-        
-        window.openServiceModal = function(mode = 'add', data = null) {
+
+        window.openServiceModal = function (mode = 'add', data = null) {
             if (serviceModal) {
                 serviceModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
-                
+
                 if (mode === 'edit' && data) {
                     editServiceForm(data);
                 } else {
@@ -349,33 +399,33 @@
                     document.getElementById('serviceId').value = '';
                     methodField.innerHTML = '';
                     serviceForm.action = "{{ route('services.store') }}";
-                    
+
                     // Reset title and button text
                     document.querySelector('#addServiceModal .modal-action').textContent = 'Add';
                     document.querySelector('#addServiceModal .save-btn').textContent = 'Save Service';
-                    
+
                     // Set default status to active
                     statusToggle.checked = true;
                     statusHidden.value = 'active';
                 }
             }
         };
-        
+
         // Add escape key handler to close all modals
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeCategoryModalDirect();
                 closeServiceModalDirect();
             }
         });
     });
-    
+
     // Direct modal control functions for Service Modal
-    window.openServiceModalDirect = function() {
+    window.openServiceModalDirect = function () {
         window.openServiceModal('add');
     };
 
-    window.openEditServiceModalDirect = function(serviceId) {
+    window.openEditServiceModalDirect = function (serviceId) {
         fetch(`/services/${serviceId}`)
             .then(response => response.json())
             .then(service => {
@@ -387,35 +437,35 @@
             });
     };
 
-    window.closeServiceModalDirect = function() {
+    window.closeServiceModalDirect = function () {
         const serviceModal = document.getElementById('addServiceModal');
         if (serviceModal) {
             serviceModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
-            
+
             // Reset forms
             const serviceForm = document.getElementById('addServiceForm');
             if (serviceForm) serviceForm.reset();
-            
+
             // Reset modal titles and buttons
             document.querySelector('#addServiceModal .modal-action').textContent = 'Add';
             document.querySelector('#addServiceModal .save-btn').textContent = 'Save Service';
-            
+
             // Reset method field
             const methodField = document.getElementById('methodField');
             if (methodField) methodField.innerHTML = '';
-            
+
             // Reset form action
             if (serviceForm) serviceForm.action = "{{ route('services.store') }}";
         }
     };
-    
+
     // Direct modal control functions for Category Modal
-    window.openCategoryModalDirect = function() {
+    window.openCategoryModalDirect = function () {
         window.openCategoryModal('add');
     };
 
-    window.openEditCategoryModalDirect = function(categoryId) {
+    window.openEditCategoryModalDirect = function (categoryId) {
         fetch(`/api/service-categories/${categoryId}`)
             .then(response => response.json())
             .then(data => {
@@ -431,20 +481,20 @@
             });
     };
 
-    window.closeCategoryModalDirect = function() {
+    window.closeCategoryModalDirect = function () {
         const categoryModal = document.getElementById('addCategoryModal');
         if (categoryModal) {
             categoryModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
-            
+
             // Reset forms
             const categoryForm = document.getElementById('addCategoryForm');
             if (categoryForm) categoryForm.reset();
-            
+
             // Reset modal titles and buttons
             document.querySelector('#addCategoryModal .modal-action').textContent = 'Add';
             document.querySelector('#addCategoryModal .save-btn').textContent = 'Save Category';
-            
+
             // Reset ID field
             document.getElementById('categoryId').value = '';
         }

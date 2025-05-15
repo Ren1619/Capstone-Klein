@@ -7,6 +7,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\CategoryController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -91,14 +92,7 @@ Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services
 Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
 Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
-// Service Categories API Routes
-Route::prefix('api')->group(function () {
-    Route::get('/service-categories', [ServiceCategoryController::class, 'index'])->name('service-categories.index');
-    Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->name('service-categories.store');
-    Route::get('/service-categories/{id}', [ServiceCategoryController::class, 'show'])->name('service-categories.show');
-    Route::put('/service-categories/{id}', [ServiceCategoryController::class, 'update'])->name('service-categories.update');
-    Route::delete('/service-categories/{id}', [ServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
-});
+
 
 // Appointment Routes
 // Appointment routes
@@ -111,3 +105,7 @@ Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateSt
 Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
 Route::post('/feedbacks', [FeedbackController::class, 'store'])->name('feedbacks.store');
 
+Route::resource('categories', CategoryController::class);
+
+// API endpoint for getting categories by type
+Route::get('api/categories/type/{type}', [CategoryController::class, 'getByType']);

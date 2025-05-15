@@ -88,17 +88,21 @@
                   placeholder="Quantity*" required>
               </div>
 
+
               <!-- Category Field -->
-              <div>
+              <div class="form-group relative">
                 <select id="category" name="category_id"
-                  class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:border-[#F91D7C] focus:ring-0 focus:outline-none text-gray-900 bg-transparent appearance-none"
+                  class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:border-[#F91D7C] focus:ring-0 focus:outline-none text-gray-900 bg-white appearance-none pr-8"
                   required>
                   <option value="" disabled selected>Select Category*</option>
-                  @foreach($categories as $category)
-            <option value="{{ $category->category_ID }}">{{ $category->name }}</option>
-          @endforeach
+                  @if(isset($categories))
+                @foreach($categories as $category)
+            <option value="{{ $category->category_ID }}">{{ $category->category_name }}</option>
+            @endforeach
+          @endif
                 </select>
-                <div class="relative float-right -mt-8 mr-2 pointer-events-none">
+                <!-- Fixed arrow positioning -->
+                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                     fill="currentColor">
                     <path fill-rule="evenodd"
@@ -201,6 +205,32 @@
         document.body.style.overflow = 'auto';
         resetForm();
       }
+    }
+
+
+    function loadCategories() {
+      if (!formInputs.category) return;
+
+      // Clear current options except the placeholder
+      while (formInputs.category.options.length > 1) {
+        formInputs.category.remove(1);
+      }
+
+      // Fetch categories from API
+      fetch('/api/categories/type/product')
+        .then(response => response.json())
+        .then(categories => {
+          // Populate categories dropdown
+          categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.category_ID;
+            option.textContent = category.category_name;
+            formInputs.category.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching categories:', error);
+        });
     }
 
     // Helper functions

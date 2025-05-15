@@ -2,68 +2,6 @@
 
 @section('title', 'Inventory')
 @section('header', 'Inventory')
-@php
-    // Calculate stats for dashboard and assign status to products
-    $totalProducts = count($products);
-    $lowStockCount = 0;
-    $outOfStockCount = 0;
-    $instockCount = 0;
-
-    // Group products by stock status
-    $groupedProducts = [
-        'instock' => [],
-        'lowstock' => [],
-        'outofstock' => []
-    ];
-
-    // Calculate status based on stock and group products
-    foreach ($products as &$product) {
-        if ($product['stock'] == 0) {
-            $product['status'] = 'out of stock';
-            $product['status_color'] = 'bg-red-500/30 text-red-700';
-            $outOfStockCount++;
-            $groupedProducts['outofstock'][] = $product;
-        } elseif ($product['stock'] < 10) {
-            $product['status'] = 'low stock';
-            $product['status_color'] = 'bg-yellow-500/30 text-yellow-700';
-            $lowStockCount++;
-            $groupedProducts['lowstock'][] = $product;
-        } else {
-            $product['status'] = 'in stock';
-            $product['status_color'] = 'bg-green-500/30 text-green-700';
-            $instockCount++;
-            $groupedProducts['instock'][] = $product;
-        }
-    }
-    unset($product); // Break the reference
-
-    // Get the current tab from the request or use 'instock' as default
-    $currentTab = request()->input('tab', 'instock');
-
-    // Get products for the current tab
-    $currentProducts = $groupedProducts[$currentTab] ?? [];
-
-    // Pagination settings
-    $itemsPerPage = 5;
-    $currentPage = request()->input('page', 1);
-    $totalItemsForTab = count($currentProducts);
-    $totalPages = ceil($totalItemsForTab / $itemsPerPage);
-
-    // Ensure current page is within valid range
-    if ($currentPage < 1) {
-        $currentPage = 1;
-    } elseif ($currentPage > $totalPages && $totalPages > 0) {
-        $currentPage = $totalPages;
-    }
-
-    // Get paginated data
-    $offset = ($currentPage - 1) * $itemsPerPage;
-    $paginatedProducts = array_slice($currentProducts, $offset, $itemsPerPage);
-
-    // Calculate pagination info
-    $startingItem = $offset + 1;
-    $endingItem = min($offset + $itemsPerPage, $totalItemsForTab);
-@endphp
 
 @section('content')
     <div class="p-3 sm:p-5 bg-neutral-100 min-h-screen">
@@ -102,19 +40,35 @@
 
         <!-- Main Content -->
         <div class="mt-5 bg-white rounded-lg shadow-sm">
-            <!-- Search and Add Button -->
+            <!-- Search and Add Buttons -->
             <div class="px-3 sm:px-7 py-3 sm:py-3.5 flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
                 <div class="w-full sm:w-52 px-2.5 py-2 rounded border border-gray-200 flex items-center gap-2">
                     <img src="{{ asset('icons/search_icon.svg') }}" alt="Search Icon">
-                    <input type="text" placeholder="Search Products..."
+                    <input type="text" id="productSearchInput" placeholder="Search Products..."
                         class="text-sm text-gray-500 focus:outline-none w-full">
                 </div>
-                <button onclick="window.openProductModalDirect()"
-                    class="w-full sm:w-auto px-4 py-2 bg-[#F91D7C] text-white rounded flex items-center justify-center gap-2 hover:bg-[#F91D7C]/90 transition-colors">
-                    <img src="{{ asset('icons/add_icon.svg') }}" alt="Add Product Icon">
-                    <span class="text-sm font-semibold">Product</span>
-                </button>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button onclick="window.openCategoryModal()"
+                        class="w-full sm:w-auto px-4 py-2 bg-[#F91D7C] text-white rounded flex items-center justify-center gap-2 hover:bg-[#F91D7C]/90 transition-colors">
+                        <img src="{{ asset('icons/add_icon.svg') }}" alt="Add Category Icon">
+                        <span class="text-sm font-semibold">Category</span>
+                    </button>
+                    <button onclick="window.openProductModalDirect()"
+                        class="w-full sm:w-auto px-4 py-2 bg-[#F91D7C] text-white rounded flex items-center justify-center gap-2 hover:bg-[#F91D7C]/90 transition-colors">
+                        <img src="{{ asset('icons/add_icon.svg') }}" alt="Add Product Icon">
+                        <span class="text-sm font-semibold">Product</span>
+                    </button>
+                </div>
             </div>
+
+            <!-- Success Message -->
+            @if(session('success'))
+                <div class="px-3 sm:px-7 pt-3">
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
 
             <!-- Stock Status Tabs -->
             <div class="border-b border-gray-200">
@@ -151,28 +105,33 @@
                                 <tr class="border-b border-gray-200">
                                     <td class="py-4">
                                         <div class="flex items-center gap-3.5">
-                                            <img src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}"
+                                            <img src="{{ asset('placeholder.png') }}" alt="{{ $product->name }}"
                                                 class="w-12 h-12 rounded border border-gray-200 object-cover">
-                                            <span class="text-black text-base">{{ $product['name'] }}</span>
+                                            <span class="text-black text-base">{{ $product->name }}</span>
                                         </div>
                                     </td>
-                                    <td class="py-4 text-black text-base">{{ $product['category'] }}</td>
-                                    <td class="py-4 text-black text-base">{{ $product['stock'] }}</td>
-                                    <td class="py-4 text-black text-base">₱ {{ number_format($product['price'], 2) }}</td>
+                                    <td class="py-4 text-black text-base">{{ $product->category->name }}</td>
+                                    <td class="py-4 text-black text-base">{{ $product->quantity }}</td>
+                                    <td class="py-4 text-black text-base">₱ {{ number_format($product->price, 2) }}</td>
                                     <td class="py-4 text-center">
                                         <span
-                                            class="px-3 py-2 {{ $product['status_color'] }} text-sm rounded">{{ $product['status'] }}</span>
+                                            class="px-3 py-2 {{ $product->status_color }} text-sm rounded">{{ $product->status }}</span>
                                     </td>
                                     <td class="py-4">
                                         <div class="flex items-center gap-3.5">
-                                            <button onclick="window.productModalFunctions.editProduct({{ $product['id'] }})"
+                                            <button onclick="window.openEditProductModalDirect('{{ $product->product_ID }}')"
                                                 class="text-green-600 hover:text-green-700">
                                                 <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit Icon">
                                             </button>
-                                            <button onclick="window.productModalFunctions.confirmDelete({{ $product['id'] }})"
-                                                class="text-red-600 hover:text-red-700">
-                                                <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete Icon">
-                                            </button>
+                                            <form action="{{ route('inventory.destroy', $product->product_ID) }}" method="POST"
+                                                class="inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-700">
+                                                    <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete Icon">
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
@@ -190,36 +149,41 @@
                     @forelse($paginatedProducts as $product)
                         <div class="bg-white rounded-lg shadow-sm mb-3 p-4 border border-gray-100">
                             <div class="flex items-start gap-3">
-                                <img src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}"
+                                <img src="{{ asset('placeholder.png') }}" alt="{{ $product->name }}"
                                     class="w-16 h-16 rounded border border-gray-200 object-cover">
                                 <div class="flex-1">
-                                    <h3 class="text-sm font-medium text-black">{{ $product['name'] }}</h3>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $product['category'] }}</p>
+                                    <h3 class="text-sm font-medium text-black">{{ $product->name }}</h3>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $product->category->name }}</p>
                                     <div class="flex items-center justify-between mt-2">
                                         <span class="text-sm font-semibold text-black">₱
-                                            {{ number_format($product['price'], 2) }}</span>
-                                        <span class="text-xs text-gray-600">Stock: {{ $product['stock'] }}</span>
+                                            {{ number_format($product->price, 2) }}</span>
+                                        <span class="text-xs text-gray-600">Stock: {{ $product->quantity }}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                                 <span
-                                    class="px-2 py-1 {{ $product['status_color'] }} text-xs rounded">{{ $product['status'] }}</span>
+                                    class="px-2 py-1 {{ $product->status_color }} text-xs rounded">{{ $product->status }}</span>
                                 <div class="flex items-center gap-3">
-                                    <button onclick="window.productModalFunctions.editProduct({{ $product['id'] }})"
+                                    <button onclick="window.openEditProductModalDirect('{{ $product->product_ID }}')"
                                         class="text-green-600 hover:text-green-700">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </button>
-                                    <button onclick="window.productModalFunctions.confirmDelete({{ $product['id'] }})"
-                                        class="text-red-600 hover:text-red-700">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
+                                    <form action="{{ route('inventory.destroy', $product->product_ID) }}" method="POST"
+                                        class="inline"
+                                        onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-700">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -260,7 +224,12 @@
     </div>
 
     @include('inventory.modals.addProduct')
+    @include('inventory.modals.addCategory')
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('js/product-search.js') }}"></script>
+@endpush
 
 @php
     $activePage = 'inventory'; // Set the active page for this specific view
