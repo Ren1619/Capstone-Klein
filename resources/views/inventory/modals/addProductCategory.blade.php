@@ -20,7 +20,7 @@
 
       <!-- Modal Body -->
       <div class="p-4 sm:p-6">
-        <form id="addCategoryForm" method="POST" action="{{ route('categories.store') }}">
+        <form id="addProductCategory" method="POST" action="{{ route('categories.store') }}">
           @csrf
           <!-- Hidden field for category type -->
           <input type="hidden" name="category_type" value="product">
@@ -89,7 +89,7 @@
       if (modal) {
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-        document.getElementById('addCategoryForm').reset();
+        document.getElementById('addProductCategory').reset();
       }
     }
 

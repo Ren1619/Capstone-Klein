@@ -12,22 +12,30 @@ class CategoryController extends Controller
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, $type = null)
     {
-        $type = $request->query('type'); // Get category type from query if provided
+        $categories = $type ? Category::where('category_type', $type)->get() : Category::all();
 
-        if ($type === 'product') {
-            $categories = Category::products()->get();
-            return response()->json($categories);
-        } elseif ($type === 'service') {
-            $categories = Category::services()->get();
-            return response()->json($categories);
-        }
-
-        // If no type specified or if viewing the web page
-        $categories = Category::all();
-        return response()->json($categories);
+        return view('categories.index', compact('categories'));
     }
+
+    /**
+     * Get categories of type product (API route).
+     */
+    public function getProductCategories()
+    {
+        return response()->json(Category::where('category_type', 'product')->get());
+    }
+
+    /**
+     * Get categories of type service (API route).
+     */
+    public function getServiceCategories()
+    {
+        return response()->json(Category::where('category_type', 'service')->get());
+    }
+
+
 
     /**
      * Show the form for creating a new category.
@@ -156,18 +164,4 @@ class CategoryController extends Controller
      * @param  string  $type
      * @return \Illuminate\Http\Response
      */
-    public function getByType($type)
-    {
-        // Directly convert URL string to match our model constants
-        if ($type === 'product') {
-            $categories = Category::products()->get();
-        } elseif ($type === 'service') {
-            $categories = Category::services()->get();
-        } else {
-            return response()->json(['error' => 'Invalid category type'], 400);
-        }
-
-        // Important: Return array directly, not wrapped in extra object
-        return response()->json($categories);
-    }
 }

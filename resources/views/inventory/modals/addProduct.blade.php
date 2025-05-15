@@ -158,6 +158,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     console.log('Initializing product modal');
 
+
     // DOM Elements
     const modal = document.getElementById('productModal');
     const modalBackdrop = document.querySelector('#productModal .modal-backdrop');
@@ -165,6 +166,7 @@
     const methodField = document.getElementById('methodField');
     const productImageInput = document.getElementById('productImage');
     const priceInput = document.getElementById('price');
+    const categorySelect = document.getElementById('category');
 
     // Core modal functions
     function openModal(mode = 'add', productId = null) {
@@ -207,29 +209,78 @@
       }
     }
 
-
-    function loadCategories() {
-      if (!formInputs.category) return;
-
-      // Clear current options except the placeholder
-      while (formInputs.category.options.length > 1) {
-        formInputs.category.remove(1);
+    function reloadProductCategories() {
+      // Keep only the first placeholder option
+      while (categorySelect.options.length > 1) {
+        categorySelect.remove(1);
       }
 
-      // Fetch categories from API
+      console.log('Fetching product categories via API');
+
       fetch('/api/categories/type/product')
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
         .then(categories => {
-          // Populate categories dropdown
+          console.log('Product categories received:', categories);
+
+          // Add categories from API
           categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.category_ID;
-            option.textContent = category.category_name;
-            formInputs.category.appendChild(option);
+            option.text = category.category_name;
+            categorySelect.appendChild(option);
+          });
+
+          // Debug: Log the final categories
+          console.log('Final categories after API load:');
+          Array.from(categorySelect.options).forEach(option => {
+            console.log(`Option: ${option.text}, Value: ${option.value}`);
           });
         })
         .catch(error => {
-          console.error('Error fetching categories:', error);
+          console.error('Error loading product categories:', error);
+        });
+    }
+
+    // Call the function to reload only product categories
+    reloadProductCategories();
+
+    const hasCategoriesFromServer = categorySelect.options.length > 1;
+    if (!hasCategoriesFromServer) {
+      loadServiceCategories();
+    } else {
+      console.log('Using service categories from server-side render');
+    }
+
+
+    function loadServiceCategories() {
+      fetch('/api/categories/type/product')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(categories => {
+          // Clear existing options except the first one
+          while (categorySelect.options.length > 1) {
+            categorySelect.remove(1);
+          }
+
+          // Add categories from API
+          categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.category_ID;
+            option.text = category.category_name;
+            categorySelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading service categories:', error);
         });
     }
 

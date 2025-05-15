@@ -4,10 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\POSController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -107,5 +107,8 @@ Route::post('/feedbacks', [FeedbackController::class, 'store'])->name('feedbacks
 
 Route::resource('categories', CategoryController::class);
 
-// API endpoint for getting categories by type
-Route::get('api/categories/type/{type}', [CategoryController::class, 'getByType']);
+Route::get('/api/categories/type/product', [CategoryController::class, 'getProductCategories']);
+Route::get('/api/categories/type/service', [CategoryController::class, 'getServiceCategories']);
+
+
+Route::get('/pos', [POSController::class, 'index'])->name('pos.index');

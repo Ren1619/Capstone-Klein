@@ -110,7 +110,7 @@
                                             <span class="text-black text-base">{{ $product->name }}</span>
                                         </div>
                                     </td>
-                                    <td class="py-4 text-black text-base">{{ $product->category->name }}</td>
+                                    <td class="py-4 text-black text-base">{{ $product->category->category_name }}</td>
                                     <td class="py-4 text-black text-base">{{ $product->quantity }}</td>
                                     <td class="py-4 text-black text-base">₱ {{ number_format($product->price, 2) }}</td>
                                     <td class="py-4 text-center">
@@ -224,7 +224,7 @@
     </div>
 
     @include('inventory.modals.addProduct')
-    @include('inventory.modals.addCategory')
+    @include('inventory.modals.addProductCategory')
 @endsection
 
 @push('scripts')
