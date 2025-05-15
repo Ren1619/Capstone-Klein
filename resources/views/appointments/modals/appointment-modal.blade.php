@@ -10,8 +10,7 @@
             <div class="flex items-center justify-between p-6 pb-0">
                 <h3 class="text-2xl font-bold">
                     <span class="text-[#F91D7C]">Set</span> your preferred schedule
-                </h3>
-                <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn">
+                </h3>                <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn" onclick="closeAllModals()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -163,8 +162,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <button type="submit" class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
                             Confirm
-                        </button>
-                        <button type="button" id="cancelBtn" class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
+                        </button>                        <button type="button" id="cancelBtn" onclick="closeAllModals()" class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
                             Cancel
                         </button>
                     </div>
