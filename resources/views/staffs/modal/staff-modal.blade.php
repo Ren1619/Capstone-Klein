@@ -1,7 +1,7 @@
 <!-- Add/Edit Staff Modal -->
 <div id="staffModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <!-- Modal overlay -->
-    <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" id="modalOverlay" onclick="closeStaffModalDirect()"></div>
+    <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" id="modalOverlay" onclick="closeAllModals()"></div>
 
     <!-- Modal Content -->
     <div class="flex items-center justify-center min-h-screen p-4">
@@ -401,16 +401,9 @@
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
-    }
-
-    function closeStaffModalDirect() {
-        const modal = document.getElementById('staffModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-            
-            const form = document.getElementById('staffForm');
-            if (form) form.reset();
-        }
+    }    function closeStaffModalDirect() {
+        closeAllModals();
+        const form = document.getElementById('staffForm');
+        if (form) form.reset();
     }
 </script>
