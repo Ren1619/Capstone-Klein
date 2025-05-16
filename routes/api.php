@@ -6,6 +6,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\AccountRoleController;
+use App\Http\Controllers\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,3 +53,5 @@ Route::prefix('sales')->group(function () {
     Route::get('/product-items/search', [SalesController::class, 'searchProductItems']);
     Route::get('/service-items/search', [SalesController::class, 'searchServiceItems']);
 });
+
+

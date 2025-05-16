@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\POSController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -91,14 +92,7 @@ Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services
 Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
 Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
-// Service Categories API Routes
-Route::prefix('api')->group(function () {
-    Route::get('/service-categories', [ServiceCategoryController::class, 'index'])->name('service-categories.index');
-    Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->name('service-categories.store');
-    Route::get('/service-categories/{id}', [ServiceCategoryController::class, 'show'])->name('service-categories.show');
-    Route::put('/service-categories/{id}', [ServiceCategoryController::class, 'update'])->name('service-categories.update');
-    Route::delete('/service-categories/{id}', [ServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
-});
+
 
 // Appointment Routes
 // Appointment routes
@@ -111,3 +105,10 @@ Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateSt
 Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
 Route::post('/feedbacks', [FeedbackController::class, 'store'])->name('feedbacks.store');
 
+Route::resource('categories', CategoryController::class);
+
+Route::get('/api/categories/type/product', [CategoryController::class, 'getProductCategories']);
+Route::get('/api/categories/type/service', [CategoryController::class, 'getServiceCategories']);
+
+
+Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
