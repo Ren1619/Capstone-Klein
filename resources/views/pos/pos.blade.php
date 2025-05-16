@@ -6,7 +6,7 @@
 
 @push('styles')
     <style>
-        /* Custom scrollbar styles - OPTIMIZED: Added will-change property */
+        /* Custom scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -29,7 +29,7 @@
             background: #ec4899;
         }
 
-        /* Tab indicator animations - OPTIMIZED: Added transform properties for smoother animation */
+        /* Tab indicator animations */
         .pos-tab .tab-indicator {
             display: none;
             /* Hide all indicators by default */
@@ -60,7 +60,7 @@
             transform: scaleX(1);
         }
 
-        /* Animation keyframes - OPTIMIZED: Added transform properties for hardware acceleration */
+        /* Animation keyframes */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -99,7 +99,7 @@
             animation: fadeOut 0.25s ease forwards;
         }
 
-        /* Product highlight effect - OPTIMIZED: Added will-change for better animation performance */
+        /* Product highlight effect */
         .highlight {
             transform: scale(0.97) translate3d(0, 0, 0);
             background-color: rgba(249, 29, 124, 0.08);
@@ -107,7 +107,7 @@
             will-change: transform, background-color;
         }
 
-        /* OPTIMIZED: Added preload styles for product cards to prevent layout shifts */
+        /* Preload styles for product cards */
         .product-card,
         .service-card {
             contain: layout style paint;
@@ -123,20 +123,20 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        /* OPTIMIZED: Add better transitions for cart items */
+        /* Better transitions for cart items */
         .cart-item {
             transition: opacity 0.2s, background-color 0.2s;
             will-change: opacity, background-color;
         }
 
-        /* OPTIMIZED: Added responsive image placeholders to prevent layout shifts */
+        /* Added responsive image placeholders */
         .product-img-placeholder,
         .service-img-placeholder {
             aspect-ratio: 16/9;
             background-color: #f9f9f9;
         }
 
-        /* OPTIMIZED: Add preconnect for external resources */
+        /* Add preconnect for external resources */
         @media (prefers-reduced-motion: no-preference) {
 
             .fade-in,
@@ -145,7 +145,7 @@
             }
         }
 
-        /* OPTIMIZED: Disable animations for users who prefer reduced motion */
+        /* Disable animations for users who prefer reduced motion */
         @media (prefers-reduced-motion: reduce) {
 
             .fade-in,
@@ -159,7 +159,7 @@
             }
         }
 
-        /* OPTIMIZED: Add loading indicator styles */
+        /* Loading indicator styles */
         @keyframes spin {
             from {
                 transform: rotate(0deg);
@@ -174,17 +174,60 @@
             animation: spin 1s linear infinite;
             will-change: transform;
         }
+
+        /* Status badge styles */
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 9999px;
+            font-size: 9px;
+            font-weight: 500;
+            min-width: 60%;
+            display: inline-block;
+        }
+
+        .status-in-stock {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: rgb(6, 95, 70);
+        }
+
+        .status-low-stock {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: rgb(146, 64, 14);
+        }
+
+        .status-out-of-stock {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: rgb(153, 27, 27);
+        }
+
+        .status-active {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: rgb(6, 95, 70);
+        }
+
+        .status-inactive {
+            background-color: rgba(156, 163, 175, 0.2);
+            color: rgb(55, 65, 81);
+        }
     </style>
 @endpush
 
 @section('content')
+    <!-- Pass products and services data to JavaScript -->
+    <script>
+        window.posData = {
+            products: @json($products),
+            services: @json($services)
+        };
+    </script>
+
     <div id="pos-module-container" class="flex flex-col h-full min-h-0 overflow-hidden">
         <div class="flex flex-col bg-gray-100 h-full rounded-lg overflow-hidden">
             <!-- POS Content Container -->
             <div class="flex flex-col md:flex-row gap-2 h-full p-2 overflow-auto">
                 <!-- Left Side - Products Display -->
                 <div class="w-full md:w-3/5 bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
-                    <!-- Search and Categories Bar - OPTIMIZED: Added aria-label for accessibility -->
+                    <!-- Search and Categories Bar -->
                     <div class="p-2 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                         <div class="relative w-full md:w-60 flex items-center">
                             <span class="absolute left-2 top-1/2 transform -translate-y-1/2">
@@ -197,36 +240,42 @@
                         </div>
                     </div>
 
-                    <!-- Tab Navigation - OPTIMIZED: Added role attributes for better accessibility and semantics -->
+                    <!-- Tab Navigation -->
                     <div class="border-b border-neutral-200 sticky top-12 bg-white z-10">
                         <div class="px-1">
                             <div class="flex overflow-x-auto" role="tablist" aria-label="Point of Sale Categories">
                                 <div class="px-3 py-2 relative flex flex-col items-center pos-tab active cursor-pointer"
                                     data-tab="products" role="tab" aria-controls="products" aria-selected="true"
                                     tabindex="0">
-                                    <div class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">Products</div>
+                                    <div
+                                        class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">
+                                        Products</div>
                                     <div class="w-full h-[2px] absolute bottom-0 bg-pink-600 tab-indicator"></div>
                                 </div>
                                 <div class="px-3 py-2 relative flex flex-col items-center pos-tab cursor-pointer"
                                     data-tab="services" role="tab" aria-controls="services" aria-selected="false"
                                     tabindex="0">
-                                    <div class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">Services</div>
+                                    <div
+                                        class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">
+                                        Services</div>
                                     <div class="w-full h-[2px] absolute bottom-0 bg-pink-600 tab-indicator hidden"></div>
                                 </div>
                                 <div class="px-3 py-2 relative flex flex-col items-center pos-tab cursor-pointer"
                                     data-tab="daily-sales" role="tab" aria-controls="daily-sales" aria-selected="false"
                                     tabindex="0">
-                                    <div class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">Daily Sales</div>
+                                    <div
+                                        class="text-xs font-medium tab-text text-black hover:text-pink-500 transition duration-200">
+                                        Daily Sales</div>
                                     <div class="w-full h-[2px] absolute bottom-0 bg-pink-600 tab-indicator hidden"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tab Content - OPTIMIZED: Added ARIA roles and preloading for content -->
+                    <!-- Tab Content -->
                     <div id="products" class="tab-content flex-1 flex flex-col" style="display:block;" role="tabpanel"
                         aria-labelledby="products-tab">
-                        <!-- Scrollable container for products - OPTIMIZED: Added loading indicator -->
+                        <!-- Scrollable container for products -->
                         <div id="products-container"
                             class="flex flex-wrap gap-2 p-2 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1">
                             <!-- Added loading placeholder -->
@@ -294,9 +343,9 @@
                     </div>
                 </div>
 
-                <!-- Right Side - Cart/Invoice Panel - OPTIMIZED: Added ARIA labels and better structure -->
+                <!-- Right Side - Cart/Invoice Panel -->
                 <div class="w-full md:w-2/5 bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
-                    <!-- Cart Header - OPTIMIZED: Added better responsive design -->
+                    <!-- Cart Header -->
                     <div class="p-2 border-b sticky top-0 bg-white z-10">
                         <div class="flex justify-between items-center">
                             <div>
@@ -316,7 +365,7 @@
                         </div>
                     </div>
 
-                    <!-- Cart Items - OPTIMIZED: Added ARIA attributes and loading state -->
+                    <!-- Cart Items -->
                     <div id="cart-items-container" class="p-2 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
                         aria-live="polite" aria-label="Shopping Cart Items">
                         <!-- Cart items will be added here via JavaScript -->
@@ -332,7 +381,7 @@
                         </div>
                     </div>
 
-                    <!-- Cart Summary - OPTIMIZED: Added ARIA roles and better keyboard support -->
+                    <!-- Cart Summary -->
                     <div class="border-t p-2 bg-gray-50">
                         <div class="grid grid-cols-2 gap-1 mb-2 text-sm">
                             <div>
@@ -416,14 +465,17 @@
         $activePage = 'pos'; // Set the active page for this specific view
     @endphp
 
-    <!-- Templates - OPTIMIZED: Added proper ARIA attributes and better organization -->
+    <!-- Templates -->
     <template id="product-card-template">
         <div class="product-card p-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow flex flex-col justify-between items-center w-24 h-32 cursor-pointer border border-gray-200"
             data-product-id="" tabindex="0" role="button">
-            <div class="relative w-full">
-                <img class="w-full h-10 object-contain mb-1 product-img" src="" alt="" loading="lazy">
-                <div
-                    class="absolute top-0 right-0 bg-pink-100 text-pink-500 text-[10px] rounded-full px-1 py-0.5 m-0.5 product-tag">
+            <div class="flex flex-col w-full">
+                <!-- Status badge positioned at the top -->
+                <div class="status-badge self-end mb-1 product-status text-center text-xs"></div>
+
+                <!-- Image container -->
+                <div class="w-full flex justify-center">
+                    <img class="h-10 object-contain mb-1 product-img" src="" alt="" loading="lazy">
                 </div>
             </div>
             <div class="text-center w-full flex flex-col justify-between flex-grow">
@@ -439,10 +491,14 @@
     <template id="service-card-template">
         <div class="service-card p-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow flex flex-col justify-between items-center w-24 h-32 cursor-pointer border border-gray-200"
             data-service-id="" tabindex="0" role="button">
-            <div class="relative w-full">
-                <img class="w-full h-10 object-contain mb-1 service-img" src="" alt="" loading="lazy">
-                <div
-                    class="absolute top-0 right-0 bg-blue-100 text-blue-500 text-[10px] rounded-full px-1 py-0.5 m-0.5 service-tag">
+            <div class="flex flex-col w-full">
+                <!-- Status badge positioned at the top -->
+                <div class="status-badge self-end mb-1 service-status text-center text-xs"></div>
+
+                <!-- Image container -->
+                <div class="w-full flex justify-center">
+                    <img class="h-10 object-contain mb-1 service-img"
+                        src="{{ asset('images/pos_service_placeholder.svg') }}" alt="" loading="lazy">
                 </div>
             </div>
             <div class="text-center w-full flex flex-col justify-between flex-grow">
@@ -487,10 +543,10 @@
         </div>
     </template>
 
-    <!-- Notification container - OPTIMIZED: Added ARIA live region for accessibility -->
+    <!-- Notification container -->
     <div id="notification-container" class="fixed bottom-4 right-4 z-50" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Loading overlay - OPTIMIZED: Better accessibility and animation -->
+    <!-- Loading overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden"
         role="dialog" aria-modal="true" aria-labelledby="loading-message">
         <div class="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
@@ -499,7 +555,7 @@
         </div>
     </div>
 
-    <!-- Keyboard shortcuts helper - NEW: Added to improve usability -->
+    <!-- Keyboard shortcuts helper -->
     <div
         class="hidden md:block fixed bottom-2 left-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-md shadow-sm opacity-70 hover:opacity-100 transition-opacity">
         <p>Shortcuts: <kbd class="px-1 py-0.5 bg-gray-100 rounded">Alt+P</kbd> Pay | <kbd

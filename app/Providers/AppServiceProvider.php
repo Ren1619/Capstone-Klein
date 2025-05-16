@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\View;
 use App\Models\Category;
 use App\Models\Branch;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use Illuminate\Database\Migrations\Migrator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,15 +27,15 @@ class AppServiceProvider extends ServiceProvider
     {
         // Share categories and branches with all views
         View::composer('*', function ($view) {
-            // Cache for better performance (60 minutes)
-            $categories = Cache::remember('all_categories', 60*60, function () {
+            // Reduce cache time to 5 minutes
+            $categories = Cache::remember('all_categories', 5 * 60, function () {
                 return Category::all();
             });
-            
-            $branches = Cache::remember('all_branches', 60*60, function () {
+
+            $branches = Cache::remember('all_branches', 5 * 60, function () {
                 return Branch::all();
             });
-            
+
             $view->with('categories', $categories);
             $view->with('branches', $branches);
         });

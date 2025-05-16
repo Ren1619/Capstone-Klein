@@ -6,16 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
             elements: {},
             templates: {},
             data: {
-                products: [
-                    { id: 1, name: 'Sun Screen A', size: '30 ml', price: 172.00, image: 'images/sunscreen.svg' },
-                    { id: 2, name: 'Sun Screen B', size: '50 ml', price: 360.00, image: 'images/sunscreen.svg' },
-                    { id: 3, name: 'Sun Screen C', size: '100 ml', price: 520.00, image: 'images/sunscreen.svg' }
-                ],
-                services: [
-                    { id: 101, name: 'Facial Treatment', duration: '60 min', price: 1500.00, image: 'images/pos_service_placeholder.svg' },
-                    { id: 102, name: 'Skin Consultation', duration: '30 min', price: 800.00, image: 'images/pos_service_placeholder.svg' },
-                    { id: 103, name: 'Dermal Fillers', duration: '45 min', price: 2500.00, image: 'images/pos_service_placeholder.svg' }
-                ],
+                products: [], // Will be populated from database
+                services: [], // Will be populated from database
                 dailySales: []
             }
         };
@@ -194,7 +186,45 @@ document.addEventListener('DOMContentLoaded', function () {
             _cache.elements['invoice-number'].textContent = invoiceNumber;
         }
 
-        // Render products efficiently - OPTIMIZED: Use DocumentFragment, virtualize rendering with chunking
+        // Load products from the database - NEW: Replace hardcoded products with database data
+        function _loadProductsFromDatabase() {
+            // Check if window.posData exists and contains products
+            if (window.posData && Array.isArray(window.posData.products)) {
+                _cache.data.products = window.posData.products.map(product => ({
+                    id: product.product_ID,
+                    name: product.name,
+                    size: product.measurement_unit,
+                    price: parseFloat(product.price),
+                    quantity: product.quantity,
+                    image: 'images/sunscreen.svg', // Default image path
+                    status: product.quantity === 0 ? 'out of stock' :
+                        product.quantity < 10 ? 'low stock' : 'in stock'
+                }));
+            } else {
+                console.error('Product data not available');
+                _cache.data.products = [];
+            }
+        }
+
+        // Load services from the database - NEW: Replace hardcoded services with database data
+        function _loadServicesFromDatabase() {
+            // Check if window.posData exists and contains services
+            if (window.posData && Array.isArray(window.posData.services)) {
+                _cache.data.services = window.posData.services.map(service => ({
+                    id: service.service_ID,
+                    name: service.name,
+                    duration: '30 min', // This could be added to the service model if needed
+                    price: parseFloat(service.price),
+                    image: 'images/pos_service_placeholder.svg', // Default image path
+                    status: service.status // 'active' or 'inactive'
+                }));
+            } else {
+                console.error('Service data not available');
+                _cache.data.services = [];
+            }
+        }
+
+        // Render products efficiently - UPDATED: Display real product data with status badges
         function _renderProducts() {
             const container = _cache.elements['products-container'];
             if (!container) return;
@@ -202,26 +232,29 @@ document.addEventListener('DOMContentLoaded', function () {
             // Clear container first to prevent memory leaks with event handlers
             container.innerHTML = '';
 
-            // Create products array - reduce copies for better performance
-            const products = [];
-            for (let i = 0; i < 20; i++) { // Reduced from 100 to 20 for better initial load
-                products.push(..._cache.data.products);
-            }
+            // Create document fragment to minimize DOM operations
+            const fragment = document.createDocumentFragment();
 
-            // Use chunking to avoid blocking the main thread
-            const chunkSize = 50;
-            let currentIndex = 0;
+            // Use the actual products from database
+            const products = _cache.data.products;
 
-            function renderChunk() {
-                // Create document fragment once per chunk
-                const fragment = document.createDocumentFragment();
-                const endIndex = Math.min(currentIndex + chunkSize, products.length);
-
-                for (let i = currentIndex; i < endIndex; i++) {
-                    const product = products[i];
+            if (products.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'w-full text-center py-8 text-gray-500';
+                emptyMessage.innerHTML = `
+                    <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <p class="text-sm">No products available</p>
+                    <p class="text-xs">Add products in the inventory section</p>
+                `;
+                fragment.appendChild(emptyMessage);
+            } else {
+                products.forEach(product => {
                     const productCard = _createElementFromTemplate(_cache.templates['product-card'], fragment => {
                         const card = fragment.querySelector('.product-card');
                         const img = card.querySelector('img');
+                        const statusBadge = card.querySelector('.product-status');
 
                         card.setAttribute('data-product-id', product.id);
                         img.src = product.image;
@@ -229,35 +262,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         card.querySelector('.product-name').textContent = product.name;
                         card.querySelector('.product-size').textContent = product.size;
-                        card.querySelector('.product-price').textContent =
-                            `₱${product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        card.querySelector('.product-price').textContent = _formatCurrency(product.price);
+
+                        // Set status badge class based on product status
+                        statusBadge.textContent = product.status;
+                        if (product.status === 'in stock') {
+                            statusBadge.classList.add('status-in-stock');
+                        } else if (product.status === 'low stock') {
+                            statusBadge.classList.add('status-low-stock');
+                        } else if (product.status === 'out of stock') {
+                            statusBadge.classList.add('status-out-of-stock');
+                            // Make out-of-stock products non-clickable
+                            card.classList.add('opacity-60');
+                            card.style.pointerEvents = 'none';
+                        }
                     });
 
                     fragment.appendChild(productCard);
-                }
-
-                // Batch DOM update
-                container.appendChild(fragment);
-
-                // Process next chunk or finish
-                currentIndex = endIndex;
-                if (currentIndex < products.length) {
-                    // Schedule next chunk with requestAnimationFrame for better UI responsiveness
-                    requestAnimationFrame(renderChunk);
-                } else {
-                    // Remove loading indicator when complete
-                    const loadingIndicator = container.querySelector('.products-loading-indicator');
-                    if (loadingIndicator) {
-                        loadingIndicator.remove();
-                    }
-                }
+                });
             }
 
-            // Start rendering
-            renderChunk();
+            // Batch DOM update
+            container.appendChild(fragment);
+
+            // Remove loading indicator
+            const loadingIndicator = container.querySelector('.products-loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
         }
 
-        // Render services efficiently - OPTIMIZED: Same improvements as _renderProducts
+        // Render services efficiently - UPDATED: Display real service data with status badges
         function _renderServices() {
             const container = _cache.elements['services-container'];
             if (!container) return;
@@ -265,31 +300,53 @@ document.addEventListener('DOMContentLoaded', function () {
             // Clear container first
             container.innerHTML = '';
 
+            // Create document fragment
             const fragment = document.createDocumentFragment();
-            const services = [];
 
-            // Reduce copies for better performance
-            for (let i = 0; i < 3; i++) {
-                services.push(..._cache.data.services);
-            }
+            // Use the actual services from database
+            const services = _cache.data.services;
 
-            services.forEach(service => {
-                const serviceCard = _createElementFromTemplate(_cache.templates['service-card'], fragment => {
-                    const card = fragment.querySelector('.service-card');
-                    const img = card.querySelector('img');
+            if (services.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'w-full text-center py-8 text-gray-500';
+                emptyMessage.innerHTML = `
+                    <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-sm">No services available</p>
+                    <p class="text-xs">Add services in the services section</p>
+                `;
+                fragment.appendChild(emptyMessage);
+            } else {
+                services.forEach(service => {
+                    const serviceCard = _createElementFromTemplate(_cache.templates['service-card'], fragment => {
+                        const card = fragment.querySelector('.service-card');
+                        const img = card.querySelector('img');
+                        const statusBadge = card.querySelector('.service-status');
 
-                    card.setAttribute('data-service-id', service.id);
-                    img.src = service.image;
-                    img.alt = service.name;
+                        card.setAttribute('data-service-id', service.id);
+                        img.src = service.image;
+                        img.alt = service.name;
 
-                    card.querySelector('.service-name').textContent = service.name;
-                    card.querySelector('.service-duration').textContent = service.duration;
-                    card.querySelector('.service-price').textContent =
-                        `₱${service.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                        card.querySelector('.service-name').textContent = service.name;
+                        card.querySelector('.service-duration').textContent = service.duration;
+                        card.querySelector('.service-price').textContent = _formatCurrency(service.price);
+
+                        // Set status badge based on service status
+                        statusBadge.textContent = service.status;
+                        if (service.status === 'active') {
+                            statusBadge.classList.add('status-active');
+                        } else {
+                            statusBadge.classList.add('status-inactive');
+                            // Make inactive services non-clickable
+                            card.classList.add('opacity-60');
+                            card.style.pointerEvents = 'none';
+                        }
+                    });
+
+                    fragment.appendChild(serviceCard);
                 });
-
-                fragment.appendChild(serviceCard);
-            });
+            }
 
             // Single DOM update
             container.appendChild(fragment);
@@ -480,9 +537,15 @@ document.addEventListener('DOMContentLoaded', function () {
             _updateCartSummary();
         }
 
-        // Add product to cart - OPTIMIZED: Better item lookup, smoother animations, CSS class caching
-        function _addItemToCart(id, name, price, type) {
+        // Add product to cart - UPDATED: Check for product stock before adding
+        function _addItemToCart(id, name, price, type, quantity = null) {
             if (!id || !type) return;
+
+            // For products, check if it's in stock
+            if (type === 'product' && quantity !== null && quantity <= 0) {
+                _showNotification('This product is out of stock', 'error');
+                return;
+            }
 
             // Ensure price is valid
             price = typeof price === 'number' && !isNaN(price) ? price : 0;
@@ -491,6 +554,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const existingItemIndex = _state.cartItems.findIndex(
                 item => item.id === id && item.type === type
             );
+
+            // For products, check if adding more would exceed stock
+            if (existingItemIndex !== -1 && type === 'product' && quantity !== null) {
+                const newQuantity = _state.cartItems[existingItemIndex].quantity + 1;
+                if (newQuantity > quantity) {
+                    _showNotification(`Only ${quantity} items available in stock`, 'error');
+                    return;
+                }
+            }
 
             if (existingItemIndex !== -1) {
                 // Update quantity if item exists
@@ -511,6 +583,9 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 // Add new item
                 const newItem = { id, name, price, quantity: 1, type };
+                if (type === 'product' && quantity !== null) {
+                    newItem.stockQuantity = quantity;
+                }
                 _state.cartItems.push(newItem);
 
                 // Create DOM element with template - optimize class handling
@@ -555,11 +630,17 @@ document.addEventListener('DOMContentLoaded', function () {
             _updateCartSummary();
         }
 
-        // Handle product selection - OPTIMIZED: Better event target checking
+        // Handle product selection - UPDATED: Pass quantity to _addItemToCart
         function _handleProductSelection(e) {
             // Find closest product card with more explicit checking
             const productCard = e.target.closest('.product-card');
             if (!productCard) return;
+
+            // Check if the card has a disabled state (out of stock)
+            if (productCard.classList.contains('opacity-60')) {
+                _showNotification('This product is out of stock', 'error');
+                return;
+            }
 
             // Visual feedback
             _addHighlightEffect(productCard);
@@ -567,6 +648,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Get product details with safer parsing
             const productId = parseInt(productCard.getAttribute('data-product-id'), 10);
             if (isNaN(productId)) return;
+
+            // Find the product in our data to get stock quantity
+            const product = _cache.data.products.find(p => p.id === productId);
+            if (!product) return;
 
             const productNameElement = productCard.querySelector('.product-name');
             const priceElement = productCard.querySelector('.product-price');
@@ -580,14 +665,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isNaN(price)) return;
 
-            // Add to cart
-            _addItemToCart(productId, productName, price, 'product');
+            // Add to cart with quantity check
+            _addItemToCart(productId, productName, price, 'product', product.quantity);
         }
 
-        // Handle service selection - OPTIMIZED: Same improvements as _handleProductSelection
+        // Handle service selection - UPDATED: Check for active status
         function _handleServiceSelection(e) {
             const serviceCard = e.target.closest('.service-card');
             if (!serviceCard) return;
+
+            // Check if the card has a disabled state (inactive)
+            if (serviceCard.classList.contains('opacity-60')) {
+                _showNotification('This service is currently inactive', 'error');
+                return;
+            }
 
             // Visual feedback
             _addHighlightEffect(serviceCard);
@@ -612,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function () {
             _addItemToCart(serviceId, serviceName, price, 'service');
         }
 
-        // Handle cart item quantity change - OPTIMIZED: Better validation
+        // Handle cart item quantity change - UPDATED: Add stock quantity check
         function _handleQuantityChange(e) {
             if (!e.target.classList.contains('item-quantity')) return;
 
@@ -628,33 +719,38 @@ document.addEventListener('DOMContentLoaded', function () {
             const itemType = itemTypeAttr;
             const newQuantity = parseInt(e.target.value, 10);
 
-            if (!isNaN(newQuantity) && newQuantity > 0) {
-                // Find item in state
-                const itemIndex = _state.cartItems.findIndex(
-                    item => item.id === itemId && item.type === itemType
-                );
+            // Find the item in the state
+            const itemIndex = _state.cartItems.findIndex(
+                item => item.id === itemId && item.type === itemType
+            );
 
-                if (itemIndex !== -1) {
-                    _state.cartItems[itemIndex].quantity = newQuantity;
-                    _updateCartSummary();
+            if (itemIndex === -1) return;
+
+            const cartItemObj = _state.cartItems[itemIndex];
+
+            // Check stock limit for products
+            if (itemType === 'product' && cartItemObj.stockQuantity !== undefined) {
+                if (newQuantity > cartItemObj.stockQuantity) {
+                    _showNotification(`Only ${cartItemObj.stockQuantity} items available in stock`, 'error');
+                    e.target.value = cartItemObj.quantity; // Reset to previous value
+                    return;
                 }
+            }
+
+            if (!isNaN(newQuantity) && newQuantity > 0) {
+                // Update quantity in state
+                _state.cartItems[itemIndex].quantity = newQuantity;
+                _updateCartSummary();
             } else {
                 // Reset to 1 if invalid and update view
                 e.target.value = 1;
-
                 // Update state to match
-                const itemIndex = _state.cartItems.findIndex(
-                    item => item.id === itemId && item.type === itemType
-                );
-
-                if (itemIndex !== -1) {
-                    _state.cartItems[itemIndex].quantity = 1;
-                    _updateCartSummary();
-                }
+                _state.cartItems[itemIndex].quantity = 1;
+                _updateCartSummary();
             }
         }
 
-        // Handle remove item from cart - OPTIMIZED: Better DOM event handling
+        // Handle remove item from cart
         function _handleRemoveItem(e) {
             const removeBtn = e.target.closest('.remove-item-btn');
             if (!removeBtn) return;
@@ -884,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Process the payment after confirmation
+        // Process the payment after confirmation - UPDATED: Handle inventory update for products
         function _processPayment(customerName, totalQuantity, totalAmount) {
             // Show success message
             _showNotification(`Payment of ${_formatCurrency(totalAmount)} processed successfully via ${_state.paymentMethod}!`);
@@ -915,6 +1011,24 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prepend to keep newest sales at top
             _cache.elements['daily-sales-tbody'].prepend(row);
 
+            // Update product inventory in the local cache
+            _state.cartItems.forEach(item => {
+                if (item.type === 'product') {
+                    // Find the product in the cache data
+                    const productIndex = _cache.data.products.findIndex(p => p.id === item.id);
+                    if (productIndex !== -1) {
+                        // Reduce the quantity
+                        _cache.data.products[productIndex].quantity -= item.quantity;
+
+                        // Update status
+                        const newQuantity = _cache.data.products[productIndex].quantity;
+                        _cache.data.products[productIndex].status =
+                            newQuantity === 0 ? 'out of stock' :
+                                newQuantity < 10 ? 'low stock' : 'in stock';
+                    }
+                }
+            });
+
             // Reset state
             _state.cartItems = [];
             _cache.elements['cart-items-container'].innerHTML = '';
@@ -926,9 +1040,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Update cart summary
             _updateCartSummary();
+            _updateEmptyCartMessage();
 
             // Generate new invoice number
             _generateInvoiceNumber();
+
+            // Rerender products to reflect inventory changes
+            _renderProducts();
         }
 
         // Ensure initial tab is active with indicators showing
@@ -990,6 +1108,10 @@ document.addEventListener('DOMContentLoaded', function () {
         function init() {
             // Cache DOM elements for better performance
             _cacheElements();
+
+            // Load data from the database
+            _loadProductsFromDatabase();
+            _loadServicesFromDatabase();
 
             // Setup initial data
             _setupCurrentDate();

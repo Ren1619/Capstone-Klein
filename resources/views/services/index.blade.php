@@ -67,7 +67,7 @@
                                             <span class="text-black text-base">{{ $service->name }}</span>
                                         </div>
                                     </td>
-                                    <td class="py-4 text-black text-base">{{ $service->category->name }}</td>
+                                    <td class="py-4 text-black text-base">{{ $service->category->category_name }}</td>
                                     <td class="py-4 text-black text-base">₱ {{ number_format($service->price, 2) }}</td>
                                     <td class="py-4 text-center">
                                         <span class="inline-block px-3 py-2 rounded text-sm {{ $service->status == 'active' ? 'bg-green-500/30 text-green-600' : 'bg-red-700/30 text-red-700' }}">
@@ -113,6 +113,8 @@
     </div>
 
     @include('services.modals.add-modal')
+    @include('services.modals.addServiceCategory')
+
 
     {{-- JavaScript for handling service actions --}}
     <script>
