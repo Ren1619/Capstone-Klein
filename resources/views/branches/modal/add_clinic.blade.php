@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Change form method to PUT for update
             methodField.innerHTML = '<input type="hidden" name="_method" value="PUT">';
-            form.action = `{{ url('clinics') }}/${clinicId}`;
+            form.action = `{{ url('branches') }}/${clinicId}`;
             
             // Fetch branch data via AJAX and populate the form
             fetchBranchData(clinicId);
