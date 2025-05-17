@@ -8,6 +8,11 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\POSController;
+use App\Http\Controllers\Patients\PatientController;
+use App\Http\Controllers\Patients\VisitController;
+use App\Http\Controllers\Patients\AllergyController;
+use App\Http\Controllers\Patients\MedicalConditionController;
+use App\Http\Controllers\Patients\MedicationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -112,3 +117,51 @@ Route::get('/api/categories/type/service', [CategoryController::class, 'getServi
 
 
 Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+
+
+
+
+
+// Patients resource routes
+Route::resource('patients', PatientController::class);
+
+// Custom route for patient details page that was in the original code
+Route::get('/patientsDetails/{id?}', [PatientController::class, 'show'])->name('patients.details');
+
+
+// Visit routes
+Route::resource('visits', VisitController::class)->except(['create', 'edit']);
+
+// Patient-specific visit routes that don't fit the resource pattern
+Route::post('/patients/{id}/visits', [VisitController::class, 'store'])->name('visits.store');
+Route::get('/patients/{id}/visits', [VisitController::class, 'getPatientVisits'])->name('patients.visits');
+
+// Medical conditions 
+Route::resource('conditions', MedicalConditionController::class);
+
+// Patient-specific medical condition route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/conditions', [MedicalConditionController::class, 'store'])->name('conditions.store');
+
+// Allergy routes 
+Route::resource('allergies', AllergyController::class);
+
+// Patient-specific allergy route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/allergies', [AllergyController::class, 'store'])->name('allergies.store');
+
+
+
+// Medication routes 
+Route::resource('medications', MedicationController::class);
+
+// Patient-specific medication route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/medications', [MedicationController::class, 'store'])->name('medications.store');
+
+
+
+// Redirects from old URLs to new ones for backward compatibility 
+Route::get('/patientsRecord', function () {
+    return redirect()->route('patients.index');
+});
+
+
+
