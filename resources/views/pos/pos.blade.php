@@ -32,7 +32,6 @@
         /* Tab indicator animations */
         .pos-tab .tab-indicator {
             display: none;
-            /* Hide all indicators by default */
             opacity: 0;
             transform: scaleX(0.9);
             transition: opacity 0.2s, transform 0.2s;
@@ -46,7 +45,6 @@
 
         .pos-tab:hover .tab-text {
             color: #db2777;
-            /* pink-500 */
         }
 
         .pos-tab.active .tab-text {
@@ -55,7 +53,6 @@
 
         .pos-tab.active .tab-indicator {
             display: block;
-            /* Only show for active tabs */
             opacity: 1;
             transform: scaleX(1);
         }
@@ -85,7 +82,6 @@
             }
         }
 
-        /* Apply will-change for animations */
         .fade-in,
         .fade-out {
             will-change: opacity, transform;
@@ -107,14 +103,12 @@
             will-change: transform, background-color;
         }
 
-        /* Preload styles for product cards */
         .product-card,
         .service-card {
             contain: layout style paint;
             will-change: transform, box-shadow;
             transition: transform 0.2s, box-shadow 0.2s;
             min-height: 8rem;
-            /* Ensure consistent height */
         }
 
         .product-card:hover,
@@ -123,20 +117,17 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        /* Better transitions for cart items */
         .cart-item {
             transition: opacity 0.2s, background-color 0.2s;
             will-change: opacity, background-color;
         }
 
-        /* Added responsive image placeholders */
         .product-img-placeholder,
         .service-img-placeholder {
             aspect-ratio: 16/9;
             background-color: #f9f9f9;
         }
 
-        /* Add preconnect for external resources */
         @media (prefers-reduced-motion: no-preference) {
 
             .fade-in,
@@ -145,7 +136,6 @@
             }
         }
 
-        /* Disable animations for users who prefer reduced motion */
         @media (prefers-reduced-motion: reduce) {
 
             .fade-in,
@@ -183,6 +173,7 @@
             font-weight: 500;
             min-width: 60%;
             display: inline-block;
+            text-transform: capitalize;
         }
 
         .status-in-stock {
@@ -195,7 +186,8 @@
             color: rgb(146, 64, 14);
         }
 
-        .status-out-of-stock {
+        .status-out-of-stock,
+        .status-out.of.stock {
             background-color: rgba(239, 68, 68, 0.2);
             color: rgb(153, 27, 27);
         }
@@ -209,7 +201,252 @@
             background-color: rgba(156, 163, 175, 0.2);
             color: rgb(55, 65, 81);
         }
+
+        /* POS specific styles */
+        .pos-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        .pos-disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .pos-highlight {
+            animation: highlightPulse 0.3s ease-in-out;
+        }
+
+        @keyframes highlightPulse {
+            0% {
+                transform: scale(1);
+                background-color: rgba(249, 29, 124, 0.1);
+            }
+
+            50% {
+                transform: scale(1.05);
+                background-color: rgba(249, 29, 124, 0.2);
+            }
+
+            100% {
+                transform: scale(1);
+                background-color: rgba(249, 29, 124, 0.1);
+            }
+        }
+
+        .pos-removing {
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s ease;
+        }
+
+        /* Notification styles */
+        .pos-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            min-width: 250px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .pos-notification-show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .pos-notification-hide {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .pos-notification-success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .pos-notification-error {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .pos-notification-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        /* Modal styles */
+        .pos-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: 16px;
+        }
+
+        .pos-modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .pos-modal-header {
+            padding: 20px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 16px;
+        }
+
+        .pos-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .pos-modal-close {
+            padding: 4px;
+            color: #6b7280;
+            hover: #374151;
+            transition: color 0.2s;
+        }
+
+        .pos-modal-body {
+            padding: 20px 24px;
+        }
+
+        .pos-modal-footer {
+            padding: 0 24px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .pos-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .pos-btn-primary {
+            background-color: #ec4899;
+            color: white;
+        }
+
+        .pos-btn-primary:hover {
+            background-color: #db2777;
+        }
+
+        .pos-btn-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .pos-btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .pos-confirmation-info {
+            margin-bottom: 16px;
+        }
+
+        .pos-customer-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .pos-label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .pos-value {
+            color: #111827;
+        }
+
+        .pos-confirmation-table-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
+        .pos-confirmation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .pos-confirmation-table th {
+            background-color: #f9fafb;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 12px;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .pos-confirmation-table td {
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        .pos-confirmation-summary {
+            border-top: 2px solid #e5e7eb;
+            padding-top: 16px;
+        }
+
+        .pos-summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .pos-summary-total {
+            font-weight: 600;
+            font-size: 16px;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 8px;
+        }
+
+        .pos-capitalize {
+            text-transform: capitalize;
+        }
     </style>
+@endpush
+
+@push('head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 @endpush
 
 @section('content')
@@ -278,12 +515,7 @@
                         <!-- Scrollable container for products -->
                         <div id="products-container"
                             class="flex flex-wrap gap-2 p-2 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1">
-                            <!-- Added loading placeholder -->
-                            <div class="products-loading-indicator w-full flex-1 flex items-center justify-center">
-                                <div
-                                    class="loading-spinner rounded-full h-8 w-8 border-3 border-pink-500 border-t-transparent">
-                                </div>
-                            </div>
+                            <!-- Products will be loaded here via JavaScript -->
                         </div>
                     </div>
 
@@ -292,12 +524,7 @@
                         <!-- Services content -->
                         <div id="services-container"
                             class="flex flex-wrap gap-2 p-2 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1">
-                            <!-- Added loading placeholder -->
-                            <div class="services-loading-indicator w-full flex-1 flex items-center justify-center">
-                                <div
-                                    class="loading-spinner rounded-full h-8 w-8 border-3 border-pink-500 border-t-transparent">
-                                </div>
-                            </div>
+                            <!-- Services will be loaded here via JavaScript -->
                         </div>
                     </div>
 
@@ -328,14 +555,25 @@
                                         </tr>
                                     </thead>
                                     <tbody id="daily-sales-tbody" class="divide-y divide-gray-200 overflow-y-auto">
-                                        <!-- Loading placeholder -->
-                                        <tr class="sales-loading-indicator">
-                                            <td colspan="5" class="py-4 text-center">
-                                                <div
-                                                    class="inline-block loading-spinner rounded-full h-8 w-8 border-3 border-pink-500 border-t-transparent">
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        @if(isset($dailySales) && count($dailySales) > 0)
+                                            @foreach($dailySales as $sale)
+                                                <tr>
+                                                    <td class="px-4 py-2 border-b">{{ $sale->sale_ID }}</td>
+                                                    <td class="px-4 py-2 border-b">{{ $sale->customer_name }}</td>
+                                                    <td class="px-4 py-2 border-b">{{ $sale->total_items ?? 0 }}</td>
+                                                    <td class="px-4 py-2 border-b">₱ {{ number_format($sale->total_cost, 2) }}</td>
+                                                    <td class="px-4 py-2 border-b">
+                                                        {{ \Carbon\Carbon::parse($sale->created_at)->format('h:i A') }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="5" class="py-4 text-center text-gray-500">
+                                                    <p>No sales recorded today</p>
+                                                </td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -461,8 +699,9 @@
             </div>
         </div>
     </div>
+
     @php
-        $activePage = 'pos'; // Set the active page for this specific view
+        $activePage = 'pos';
     @endphp
 
     <!-- Templates -->
@@ -540,6 +779,28 @@
                     </svg>
                 </button>
             </div>
+        </div>
+    </template>
+
+    <!-- Empty state template -->
+    <template id="empty-state-template">
+        <div class="empty-state w-full flex-1 flex flex-col items-center justify-center py-8">
+            <div class="text-gray-300 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </div>
+            <h3 class="empty-state-title text-lg font-medium text-gray-900 mb-2"></h3>
+            <p class="empty-state-subtitle text-gray-600 text-center"></p>
+        </div>
+    </template>
+
+    <!-- Loading indicator template -->
+    <template id="loading-indicator-template">
+        <div class="w-full flex-1 flex items-center justify-center py-8">
+            <div class="loading-spinner rounded-full h-8 w-8 border-3 border-pink-500 border-t-transparent"></div>
+            <p class="loading-message ml-3 text-gray-600"></p>
         </div>
     </template>
 

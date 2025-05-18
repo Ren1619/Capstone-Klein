@@ -36,6 +36,30 @@ class ProductCartItem extends Model
     }
 
     /**
+     * Get the total cost for this cart item
+     */
+    public function getTotalCostAttribute()
+    {
+        return $this->product ? ($this->product->price * $this->quantity) : 0;
+    }
+
+    /**
+     * Scope for filtering by sale
+     */
+    public function scopeForSale($query, $saleId)
+    {
+        return $query->where('sale_ID', $saleId);
+    }
+
+    /**
+     * Scope for filtering by product
+     */
+    public function scopeForProduct($query, $productId)
+    {
+        return $query->where('product_ID', $productId);
+    }
+
+    /**
      * Prevent model deletion
      */
     protected static function boot()

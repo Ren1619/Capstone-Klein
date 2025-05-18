@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->decimal('discount_perc', 5, 2);
             $table->decimal('total_cost', 15, 2);
             $table->boolean('finalized')->default(false);
+            $table->string('branch')->default('valencia');
             $table->timestamps();
         });
     }

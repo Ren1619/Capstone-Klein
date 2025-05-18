@@ -36,6 +36,30 @@ class ServiceCartItem extends Model
     }
 
     /**
+     * Get the total cost for this cart item
+     */
+    public function getTotalCostAttribute()
+    {
+        return $this->service ? ($this->service->price * $this->quantity) : 0;
+    }
+
+    /**
+     * Scope for filtering by sale
+     */
+    public function scopeForSale($query, $saleId)
+    {
+        return $query->where('sale_ID', $saleId);
+    }
+
+    /**
+     * Scope for filtering by service
+     */
+    public function scopeForService($query, $serviceId)
+    {
+        return $query->where('service_ID', $serviceId);
+    }
+
+    /**
      * Prevent model deletion
      */
     protected static function boot()

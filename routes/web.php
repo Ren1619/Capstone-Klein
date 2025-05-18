@@ -8,26 +8,30 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\POSController;
+use App\Http\Controllers\SalesController;
+use App\Models\Sale;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
+
+Route::get('/api/sales/test', [SalesController::class, 'test']);
+Route::get('/api/sales/daily', [SalesController::class, 'getDailySales']);
+Route::get('/api/sales/reports/overview', [SalesController::class, 'getOverview']);
+Route::get('/api/sales/reports/chart-data', [SalesController::class, 'getChartData']);
+Route::get('/api/sales/reports/branch-comparison', [SalesController::class, 'getBranchComparison']);
+Route::get('/api/sales', [SalesController::class, 'index']);
+Route::post('/api/sales', [SalesController::class, 'store']);
 
 Route::get('/', function () {
     return view('landing page/landing_page');
 });
 
-
 Route::get('/login', function () {
     return view('login');
 });
-
 
 Route::get('/dashboard', function () {
     return view('dashboard/dashboard');
@@ -45,10 +49,6 @@ Route::get('/logs', function () {
     return view('logs/logs');
 });
 
-Route::get('/pos', function () {
-    return view('pos/pos');
-});
-
 Route::get('/inventory', function () {
     return view('inventory/inventory');
 });
@@ -61,11 +61,9 @@ Route::get('/reports', function () {
     return view('reports/reports');
 });
 
-
 Route::get('/patientsDetails', function () {
     return view('patients record/patient_detail');
 });
-
 
 Route::get('/patientsVisits', function () {
     return view('patients record/patient_visit');
@@ -92,15 +90,13 @@ Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services
 Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
 Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
-
-
 // Appointment Routes
-// Appointment routes
 Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
 Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
 Route::get('/appointments/filter', [AppointmentController::class, 'filter'])->name('appointments.filter');
 Route::get('/appointments/counts', [AppointmentController::class, 'counts'])->name('appointments.counts');
 Route::put('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.status.update');
+
 // Feedback Routes
 Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
 Route::post('/feedbacks', [FeedbackController::class, 'store'])->name('feedbacks.store');
@@ -110,5 +106,9 @@ Route::resource('categories', CategoryController::class);
 Route::get('/api/categories/type/product', [CategoryController::class, 'getProductCategories']);
 Route::get('/api/categories/type/service', [CategoryController::class, 'getServiceCategories']);
 
+// POS routes
+Route::get('/pos', [POSController::class, 'index']);
 
-Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+// NON-API Sales routes (for direct web access)
+Route::get('/sales/daily', [SalesController::class, 'getDailySales']);
+Route::post('/sales', [SalesController::class, 'store']);

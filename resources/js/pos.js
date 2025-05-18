@@ -1,1143 +1,557 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Create POS namespace with module pattern
-    const POS = (function () {
-        // Private variables and caches
-        const _cache = {
-            elements: {},
-            templates: {},
-            data: {
-                products: [], // Will be populated from database
-                services: [], // Will be populated from database
-                dailySales: []
-            }
-        };
+    // Simple POS System
+    const POS = {
+        // State
+        cart: [],
+        discount: 0,
+        amountReceived: 0,
+        products: window.posData?.products || [],
+        services: window.posData?.services || [],
 
-        // Private state
-        const _state = {
-            cartItems: [],
-            discountPercentage: 0,
-            paymentMethod: 'cash',
-            amountReceived: 0,
-            searchDebounceTimer: null
-        };
+        // DOM Elements
+        elements: {},
 
-        // Initialize DOM element cache - OPTIMIZED: Batch DOM queries, use clearer naming conventions
-        function _cacheElements() {
-            const elements = [
-                'products-container', 'services-container', 'daily-sales-tbody',
-                'cart-items-container', 'total-quantity', 'subtotal', 'discount-input',
-                'discount-amount', 'total-amount', 'amount-received-input', 'change-amount',
-                'pay-button', 'payment-method', 'customer-name', 'product-search',
-                'current-date', 'invoice-number', 'notification-container', 'loading-overlay'
-            ];
+        // Initialize
+        init() {
+            this.cacheElements();
+            this.renderProducts();
+            this.renderServices();
+            this.setupEventListeners();
+            this.updateDateTime();
+            this.loadDailySales();
+        },
 
-            // Use a single loop to cache all elements by ID
-            elements.forEach(id => {
-                _cache.elements[id] = document.getElementById(id);
+        // Cache DOM elements
+        cacheElements() {
+            this.elements = {
+                productsContainer: document.getElementById('products-container'),
+                servicesContainer: document.getElementById('services-container'),
+                cartContainer: document.getElementById('cart-items-container'),
+                totalQuantity: document.getElementById('total-quantity'),
+                subtotal: document.getElementById('subtotal'),
+                discountInput: document.getElementById('discount-input'),
+                discountAmount: document.getElementById('discount-amount'),
+                totalAmount: document.getElementById('total-amount'),
+                amountReceived: document.getElementById('amount-received-input'),
+                changeAmount: document.getElementById('change-amount'),
+                customerName: document.getElementById('customer-name'),
+                payButton: document.getElementById('pay-button'),
+                currentDate: document.getElementById('current-date'),
+                invoiceNumber: document.getElementById('invoice-number'),
+                dailySalesTable: document.getElementById('daily-sales-tbody'),
+                tabs: document.querySelectorAll('.pos-tab'),
+                tabContents: document.querySelectorAll('.tab-content')
+            };
+        },
+
+        // Render products
+        renderProducts() {
+            if (!this.elements.productsContainer) return;
+
+            this.elements.productsContainer.innerHTML = '';
+
+            this.products.forEach(product => {
+                const productCard = this.createProductCard(product);
+                this.elements.productsContainer.appendChild(productCard);
             });
+        },
 
-            // Cache collections in a separate group for clarity
-            _cache.elements.tabs = document.querySelectorAll('.pos-tab');
-            _cache.elements.tabContents = document.querySelectorAll('.tab-content');
-            _cache.elements.emptyCartMessage = document.querySelector('.empty-cart-message');
-            _cache.elements.loadingIndicators = document.querySelectorAll('.loading-spinner');
+        // Create product card
+        createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card p-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow flex flex-col justify-between items-center w-24 h-32 cursor-pointer border border-gray-200';
+            card.dataset.productId = product.id;
 
-            // Cache templates - pre-parse templates for better performance
-            ['product-card-template', 'service-card-template', 'cart-item-template'].forEach(id => {
-                _cache.templates[id.replace('-template', '')] = document.getElementById(id);
-            });
-        }
-
-        // Format currency helper - OPTIMIZED: Added number validation
-        function _formatCurrency(amount) {
-            // Ensure amount is a number and defaults to 0 if invalid
-            const value = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
-            return `₱ ${value.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })}`;
-        }
-
-        // DOM helper to create elements from templates - OPTIMIZED: More robust error handling
-        function _createElementFromTemplate(template, setupFunction) {
-            if (!template || !template.content) {
-                console.error('Invalid template provided to _createElementFromTemplate');
-                return document.createDocumentFragment();
-            }
-            const clone = template.content.cloneNode(true);
-            if (typeof setupFunction === 'function') {
-                setupFunction(clone);
-            }
-            return clone;
-        }
-
-        // Add visual highlight effect to elements - OPTIMIZED: Use requestAnimationFrame and will-change property
-        function _addHighlightEffect(element) {
-            if (!element) return;
-
-            // Add will-change property before animation for better performance
-            element.style.willChange = 'transform, background-color';
-
-            requestAnimationFrame(() => {
-                element.classList.add('highlight');
-
-                // Use a timeout for the cleanup
-                setTimeout(() => {
-                    element.classList.remove('highlight');
-
-                    // Clean up will-change after animation completes
-                    setTimeout(() => {
-                        element.style.willChange = 'auto';
-                    }, 300);
-                }, 300);
-            });
-        }
-
-        // Show a notification - OPTIMIZED: Use DocumentFragment, add error styling, precompute classes
-        function _showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            const baseClasses = "text-white px-4 py-2 rounded-md shadow-lg mb-2 opacity-0 transition-opacity duration-300";
-
-            // Set background color based on type
-            notification.className = type === 'success'
-                ? `bg-pink-500 ${baseClasses}`
-                : `bg-red-500 ${baseClasses}`;
-
-            notification.textContent = message;
-
-            // Use requestAnimationFrame for better performance
-            requestAnimationFrame(() => {
-                // Add to container
-                _cache.elements['notification-container'].appendChild(notification);
-
-                // Force reflow before adding opacity class
-                notification.offsetHeight;
-                notification.classList.add('opacity-100');
-            });
-
-            // Remove after delay with proper cleanup
-            setTimeout(() => {
-                notification.classList.remove('opacity-100');
-                notification.classList.add('opacity-0');
-
-                // Wait for transition to complete before removing from DOM
-                notification.addEventListener('transitionend', () => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, { once: true });
-            }, 3000);
-        }
-
-        // Update empty cart message visibility - OPTIMIZED: More direct DOM manipulation, early return
-        function _updateEmptyCartMessage() {
-            const emptyCartMessage = _cache.elements.emptyCartMessage;
-            if (!emptyCartMessage) return;
-
-            // Use direct toggle instead of add/remove for better performance
-            emptyCartMessage.classList.toggle('hidden', _state.cartItems.length > 0);
-        }
-
-        // Update cart summary calculations - OPTIMIZED: Reduce calculations, better variable naming
-        function _updateCartSummary() {
-            // Use reduce once for all calculations with optimized initial value
-            const totals = _state.cartItems.reduce((acc, item) => {
-                const itemTotal = item.price * item.quantity;
-                acc.quantity += item.quantity;
-                acc.subtotal += itemTotal;
-                return acc;
-            }, { quantity: 0, subtotal: 0 });
-
-            // Calculate discount amount based on percentage - use more descriptive variables
-            const discountPercentage = Math.max(0, Math.min(100, _state.discountPercentage)); // Clamp between 0-100
-            const discountAmount = (totals.subtotal * discountPercentage) / 100;
-            const totalAfterDiscount = totals.subtotal - discountAmount;
-            const change = Math.max(0, _state.amountReceived - totalAfterDiscount);
-
-            // Group DOM updates by type for better performance
-            requestAnimationFrame(() => {
-                // Text content updates
-                _cache.elements['total-quantity'].textContent = totals.quantity;
-                _cache.elements['subtotal'].textContent = _formatCurrency(totals.subtotal);
-                _cache.elements['discount-amount'].textContent = _formatCurrency(discountAmount);
-                _cache.elements['total-amount'].textContent = _formatCurrency(totalAfterDiscount);
-                _cache.elements['change-amount'].textContent = _formatCurrency(change);
-
-                // Value updates for inputs
-                _cache.elements['discount-input'].value = discountPercentage;
-            });
-        }
-
-        // Generate current date display - OPTIMIZED: Memoize to prevent repeated object creation
-        function _setupCurrentDate() {
-            if (!_cache.elements['current-date']) return;
-
-            const date = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            _cache.elements['current-date'].textContent = date.toLocaleDateString('en-US', options);
-        }
-
-        // Generate random invoice number - OPTIMIZED: More efficient number generation
-        function _generateInvoiceNumber() {
-            if (!_cache.elements['invoice-number']) return;
-
-            // Use bitwise operations for faster integer math
-            const invoiceNumber = (100000 + ((Math.random() * 900000) | 0));
-            _cache.elements['invoice-number'].textContent = invoiceNumber;
-        }
-
-        // Load products from the database - NEW: Replace hardcoded products with database data
-        function _loadProductsFromDatabase() {
-            // Check if window.posData exists and contains products
-            if (window.posData && Array.isArray(window.posData.products)) {
-                _cache.data.products = window.posData.products.map(product => ({
-                    id: product.product_ID,
-                    name: product.name,
-                    size: product.measurement_unit,
-                    price: parseFloat(product.price),
-                    quantity: product.quantity,
-                    image: 'images/sunscreen.svg', // Default image path
-                    status: product.quantity === 0 ? 'out of stock' :
-                        product.quantity < 10 ? 'low stock' : 'in stock'
-                }));
-            } else {
-                console.error('Product data not available');
-                _cache.data.products = [];
-            }
-        }
-
-        // Load services from the database - NEW: Replace hardcoded services with database data
-        function _loadServicesFromDatabase() {
-            // Check if window.posData exists and contains services
-            if (window.posData && Array.isArray(window.posData.services)) {
-                _cache.data.services = window.posData.services.map(service => ({
-                    id: service.service_ID,
-                    name: service.name,
-                    duration: '30 min', // This could be added to the service model if needed
-                    price: parseFloat(service.price),
-                    image: 'images/pos_service_placeholder.svg', // Default image path
-                    status: service.status // 'active' or 'inactive'
-                }));
-            } else {
-                console.error('Service data not available');
-                _cache.data.services = [];
-            }
-        }
-
-        // Render products efficiently - UPDATED: Display real product data with status badges
-        function _renderProducts() {
-            const container = _cache.elements['products-container'];
-            if (!container) return;
-
-            // Clear container first to prevent memory leaks with event handlers
-            container.innerHTML = '';
-
-            // Create document fragment to minimize DOM operations
-            const fragment = document.createDocumentFragment();
-
-            // Use the actual products from database
-            const products = _cache.data.products;
-
-            if (products.length === 0) {
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'w-full text-center py-8 text-gray-500';
-                emptyMessage.innerHTML = `
-                    <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                    <p class="text-sm">No products available</p>
-                    <p class="text-xs">Add products in the inventory section</p>
-                `;
-                fragment.appendChild(emptyMessage);
-            } else {
-                products.forEach(product => {
-                    const productCard = _createElementFromTemplate(_cache.templates['product-card'], fragment => {
-                        const card = fragment.querySelector('.product-card');
-                        const img = card.querySelector('img');
-                        const statusBadge = card.querySelector('.product-status');
-
-                        card.setAttribute('data-product-id', product.id);
-                        img.src = product.image;
-                        img.alt = product.name;
-
-                        card.querySelector('.product-name').textContent = product.name;
-                        card.querySelector('.product-size').textContent = product.size;
-                        card.querySelector('.product-price').textContent = _formatCurrency(product.price);
-
-                        // Set status badge class based on product status
-                        statusBadge.textContent = product.status;
-                        if (product.status === 'in stock') {
-                            statusBadge.classList.add('status-in-stock');
-                        } else if (product.status === 'low stock') {
-                            statusBadge.classList.add('status-low-stock');
-                        } else if (product.status === 'out of stock') {
-                            statusBadge.classList.add('status-out-of-stock');
-                            // Make out-of-stock products non-clickable
-                            card.classList.add('opacity-60');
-                            card.style.pointerEvents = 'none';
-                        }
-                    });
-
-                    fragment.appendChild(productCard);
-                });
+            const isOutOfStock = product.quantity === 0;
+            if (isOutOfStock) {
+                card.classList.add('opacity-60', 'pos-disabled');
+                card.style.pointerEvents = 'none';
             }
 
-            // Batch DOM update
-            container.appendChild(fragment);
-
-            // Remove loading indicator
-            const loadingIndicator = container.querySelector('.products-loading-indicator');
-            if (loadingIndicator) {
-                loadingIndicator.remove();
-            }
-        }
-
-        // Render services efficiently - UPDATED: Display real service data with status badges
-        function _renderServices() {
-            const container = _cache.elements['services-container'];
-            if (!container) return;
-
-            // Clear container first
-            container.innerHTML = '';
-
-            // Create document fragment
-            const fragment = document.createDocumentFragment();
-
-            // Use the actual services from database
-            const services = _cache.data.services;
-
-            if (services.length === 0) {
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'w-full text-center py-8 text-gray-500';
-                emptyMessage.innerHTML = `
-                    <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    <p class="text-sm">No services available</p>
-                    <p class="text-xs">Add services in the services section</p>
-                `;
-                fragment.appendChild(emptyMessage);
-            } else {
-                services.forEach(service => {
-                    const serviceCard = _createElementFromTemplate(_cache.templates['service-card'], fragment => {
-                        const card = fragment.querySelector('.service-card');
-                        const img = card.querySelector('img');
-                        const statusBadge = card.querySelector('.service-status');
-
-                        card.setAttribute('data-service-id', service.id);
-                        img.src = service.image;
-                        img.alt = service.name;
-
-                        card.querySelector('.service-name').textContent = service.name;
-                        card.querySelector('.service-duration').textContent = service.duration;
-                        card.querySelector('.service-price').textContent = _formatCurrency(service.price);
-
-                        // Set status badge based on service status
-                        statusBadge.textContent = service.status;
-                        if (service.status === 'active') {
-                            statusBadge.classList.add('status-active');
-                        } else {
-                            statusBadge.classList.add('status-inactive');
-                            // Make inactive services non-clickable
-                            card.classList.add('opacity-60');
-                            card.style.pointerEvents = 'none';
-                        }
-                    });
-
-                    fragment.appendChild(serviceCard);
-                });
-            }
-
-            // Single DOM update
-            container.appendChild(fragment);
-
-            // Remove loading indicator
-            const loadingIndicator = container.querySelector('.services-loading-indicator');
-            if (loadingIndicator) {
-                loadingIndicator.remove();
-            }
-        }
-
-        // Generate sample daily sales data - OPTIMIZED: Use DocumentFragment, fewer object allocations
-        function _generateDailySales() {
-            const tbody = _cache.elements['daily-sales-tbody'];
-            if (!tbody) return;
-
-            // Clear any loading indicators
-            tbody.innerHTML = '';
-
-            const sales = [];
-            const fragment = document.createDocumentFragment();
-            const currentDate = new Date(); // Create date object once
-
-            for (let i = 0; i < 5; i++) {
-                // Clone date object once per iteration
-                const date = new Date(currentDate);
-                date.setHours(date.getHours() - Math.floor(Math.random() * 8));
-
-                const sale = {
-                    invoice: `12345${i}`,
-                    customer: `Customer ${i + 1}`,
-                    items: Math.floor(Math.random() * 5) + 1,
-                    total: Math.floor(Math.random() * 4900) + 100,
-                    time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                };
-
-                sales.push(sale);
-
-                const row = document.createElement('tr');
-
-                // Use template literals once for better performance
-                row.innerHTML = `
-                    <td class="px-4 py-2 border-b">${sale.invoice}</td>
-                    <td class="px-4 py-2 border-b">${sale.customer}</td>
-                    <td class="px-4 py-2 border-b">${sale.items}</td>
-                    <td class="px-4 py-2 border-b">₱ ${sale.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td class="px-4 py-2 border-b">${sale.time}</td>
-                `;
-
-                fragment.appendChild(row);
-            }
-
-            // Update state and DOM in a single batch
-            _cache.data.dailySales = sales;
-            tbody.appendChild(fragment);
-        }
-
-        // FIXED: Completely rewritten tab handling function to properly handle tab indicators
-        function _handleTabClick(e) {
-            const tab = e.currentTarget;
-            if (!tab) return;
-
-            const tabId = tab.getAttribute('data-tab');
-            if (!tabId) return;
-
-            // Use cached elements instead of repeated queries
-            const allTabs = _cache.elements.tabs;
-            const allContents = _cache.elements.tabContents;
-
-            // Update tab indicators and active states in a single animation frame
-            requestAnimationFrame(() => {
-                // First, reset all tabs to inactive state
-                allTabs.forEach(t => {
-                    // Remove active class
-                    t.classList.remove('active');
-                    // Set ARIA attribute
-                    t.setAttribute('aria-selected', 'false');
-
-                    // Reset tab indicator - The most important fix
-                    const indicator = t.querySelector('.tab-indicator');
-                    if (indicator) {
-                        indicator.style.display = 'none';
-                    }
-
-                    // Reset text color
-                    const textElement = t.querySelector('.tab-text');
-                    if (textElement) {
-                        textElement.style.color = '';
-                    }
-                });
-
-                // Then set the active tab
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-
-                // Show and animate the indicator for active tab
-                const activeIndicator = tab.querySelector('.tab-indicator');
-                if (activeIndicator) {
-                    activeIndicator.style.display = 'block';
-                    activeIndicator.style.opacity = '1';
-                    activeIndicator.style.transform = 'scaleX(1)';
-                }
-
-                // Update text color for active tab
-                const activeTextElement = tab.querySelector('.tab-text');
-                if (activeTextElement) {
-                    activeTextElement.style.color = '#db2777';
-                }
-
-                // Update content areas - first hide all, then show active
-                allContents.forEach(content => {
-                    const isActive = content.id === tabId;
-
-                    if (isActive) {
-                        // Show the active content immediately
-                        content.style.display = 'block';
-                        content.classList.add('fade-in');
-                        content.classList.remove('fade-out');
-                    } else {
-                        // Hide inactive content immediately
-                        content.style.display = 'none';
-                        content.classList.remove('fade-in');
-                    }
-                });
-            });
-        }
-
-        // Optimized search with debounce - IMPROVED: Better debouncing & DOM filtering
-        function _handleProductSearch(e) {
-            const searchInput = e.target;
-            if (!searchInput) return;
-
-            // Clear previous timeout
-            clearTimeout(_state.searchDebounceTimer);
-
-            // Use a separate variable to avoid repeatedly accessing e.target
-            const searchTerm = searchInput.value.toLowerCase().trim();
-
-            // Skip search if term is too short (performance optimization)
-            if (searchTerm.length === 0) {
-                // Show all products immediately if search is cleared
-                const productCards = _cache.elements['products-container'].querySelectorAll('.product-card');
-                productCards.forEach(card => card.classList.remove('hidden'));
-                return;
-            }
-
-            // Set new timeout (debounce)
-            _state.searchDebounceTimer = setTimeout(() => {
-                const productCards = _cache.elements['products-container'].querySelectorAll('.product-card');
-
-                // Use DocumentFragment to minimize layout thrashing when showing/hiding many items
-                requestAnimationFrame(() => {
-                    productCards.forEach(card => {
-                        const productName = card.querySelector('.product-name').textContent.toLowerCase();
-                        const isVisible = productName.includes(searchTerm);
-                        card.classList.toggle('hidden', !isVisible);
-                    });
-                });
-            }, 200); // 200ms debounce
-        }
-
-        // Handle amount received input - OPTIMIZED: Add better input validation
-        function _handleAmountReceivedChange(e) {
-            const inputValue = parseFloat(e.target.value);
-            // Ensure value is a positive number
-            _state.amountReceived = !isNaN(inputValue) && inputValue >= 0 ? inputValue : 0;
-
-            // Update UI only when value actually changes
-            if (_state.amountReceived.toString() !== e.target.value && !isNaN(inputValue)) {
-                e.target.value = _state.amountReceived;
-            }
-
-            _updateCartSummary();
-        }
-
-        // Handle discount percentage input - OPTIMIZED: Better range limiting
-        function _handleDiscountChange(e) {
-            // Get value and ensure it's within 0-100 range
-            const inputValue = parseInt(e.target.value, 10);
-            const value = !isNaN(inputValue) ? Math.min(Math.max(inputValue, 0), 100) : 0;
-
-            // Update input if value was clamped
-            if (value !== inputValue && !isNaN(inputValue)) {
-                e.target.value = value;
-            }
-
-            _state.discountPercentage = value;
-            _updateCartSummary();
-        }
-
-        // Add product to cart - UPDATED: Check for product stock before adding
-        function _addItemToCart(id, name, price, type, quantity = null) {
-            if (!id || !type) return;
-
-            // For products, check if it's in stock
-            if (type === 'product' && quantity !== null && quantity <= 0) {
-                _showNotification('This product is out of stock', 'error');
-                return;
-            }
-
-            // Ensure price is valid
-            price = typeof price === 'number' && !isNaN(price) ? price : 0;
-
-            // Check if item already exists with a more efficient lookup
-            const existingItemIndex = _state.cartItems.findIndex(
-                item => item.id === id && item.type === type
-            );
-
-            // For products, check if adding more would exceed stock
-            if (existingItemIndex !== -1 && type === 'product' && quantity !== null) {
-                const newQuantity = _state.cartItems[existingItemIndex].quantity + 1;
-                if (newQuantity > quantity) {
-                    _showNotification(`Only ${quantity} items available in stock`, 'error');
-                    return;
-                }
-            }
-
-            if (existingItemIndex !== -1) {
-                // Update quantity if item exists
-                _state.cartItems[existingItemIndex].quantity += 1;
-
-                // Update DOM - optimize selector
-                const cartItemElement = document.querySelector(
-                    `.cart-item[data-item-id="${id}"][data-item-type="${type}"]`
-                );
-
-                if (cartItemElement) {
-                    const quantityInput = cartItemElement.querySelector('.item-quantity');
-                    if (quantityInput) {
-                        quantityInput.value = _state.cartItems[existingItemIndex].quantity;
-                    }
-                    _addHighlightEffect(cartItemElement);
-                }
-            } else {
-                // Add new item
-                const newItem = { id, name, price, quantity: 1, type };
-                if (type === 'product' && quantity !== null) {
-                    newItem.stockQuantity = quantity;
-                }
-                _state.cartItems.push(newItem);
-
-                // Create DOM element with template - optimize class handling
-                const cartItem = _createElementFromTemplate(_cache.templates['cart-item'], fragment => {
-                    const cartItemElement = fragment.querySelector('.cart-item');
-                    if (!cartItemElement) return;
-
-                    cartItemElement.setAttribute('data-item-id', id);
-                    cartItemElement.setAttribute('data-item-type', type);
-
-                    const nameElement = cartItemElement.querySelector('.cart-item-name');
-                    const priceElement = cartItemElement.querySelector('.cart-item-price');
-
-                    if (nameElement) nameElement.textContent = name;
-                    if (priceElement) priceElement.textContent = _formatCurrency(price);
-                });
-
-                // Add to DOM with optimized animation
-                const cartItemContainer = _cache.elements['cart-items-container'];
-                if (cartItemContainer) {
-                    const cartItemElement = cartItem.querySelector('.cart-item');
-                    if (cartItemElement) {
-                        // Set initial state
-                        cartItemElement.style.opacity = '0';
-                        // Append to DOM
-                        cartItemContainer.appendChild(cartItem);
-
-                        // Trigger animation in next frame
-                        requestAnimationFrame(() => {
-                            cartItemElement.style.transition = 'opacity 300ms';
-                            cartItemElement.style.opacity = '1';
-                        });
-                    } else {
-                        // Fallback if element selector fails
-                        cartItemContainer.appendChild(cartItem);
-                    }
-                }
-            }
-
-            // Update UI
-            _updateEmptyCartMessage();
-            _updateCartSummary();
-        }
-
-        // Handle product selection - UPDATED: Pass quantity to _addItemToCart
-        function _handleProductSelection(e) {
-            // Find closest product card with more explicit checking
-            const productCard = e.target.closest('.product-card');
-            if (!productCard) return;
-
-            // Check if the card has a disabled state (out of stock)
-            if (productCard.classList.contains('opacity-60')) {
-                _showNotification('This product is out of stock', 'error');
-                return;
-            }
-
-            // Visual feedback
-            _addHighlightEffect(productCard);
-
-            // Get product details with safer parsing
-            const productId = parseInt(productCard.getAttribute('data-product-id'), 10);
-            if (isNaN(productId)) return;
-
-            // Find the product in our data to get stock quantity
-            const product = _cache.data.products.find(p => p.id === productId);
-            if (!product) return;
-
-            const productNameElement = productCard.querySelector('.product-name');
-            const priceElement = productCard.querySelector('.product-price');
-
-            if (!productNameElement || !priceElement) return;
-
-            const productName = productNameElement.textContent;
-            // More robust price extraction
-            const priceText = priceElement.textContent;
-            const price = parseFloat(priceText.replace(/[^\d.-]/g, ''));
-
-            if (isNaN(price)) return;
-
-            // Add to cart with quantity check
-            _addItemToCart(productId, productName, price, 'product', product.quantity);
-        }
-
-        // Handle service selection - UPDATED: Check for active status
-        function _handleServiceSelection(e) {
-            const serviceCard = e.target.closest('.service-card');
-            if (!serviceCard) return;
-
-            // Check if the card has a disabled state (inactive)
-            if (serviceCard.classList.contains('opacity-60')) {
-                _showNotification('This service is currently inactive', 'error');
-                return;
-            }
-
-            // Visual feedback
-            _addHighlightEffect(serviceCard);
-
-            // Get service details with safer parsing
-            const serviceId = parseInt(serviceCard.getAttribute('data-service-id'), 10);
-            if (isNaN(serviceId)) return;
-
-            const serviceNameElement = serviceCard.querySelector('.service-name');
-            const priceElement = serviceCard.querySelector('.service-price');
-
-            if (!serviceNameElement || !priceElement) return;
-
-            const serviceName = serviceNameElement.textContent;
-            // More robust price extraction
-            const priceText = priceElement.textContent;
-            const price = parseFloat(priceText.replace(/[^\d.-]/g, ''));
-
-            if (isNaN(price)) return;
-
-            // Add to cart
-            _addItemToCart(serviceId, serviceName, price, 'service');
-        }
-
-        // Handle cart item quantity change - UPDATED: Add stock quantity check
-        function _handleQuantityChange(e) {
-            if (!e.target.classList.contains('item-quantity')) return;
-
-            const cartItem = e.target.closest('.cart-item');
-            if (!cartItem) return;
-
-            const itemIdAttr = cartItem.getAttribute('data-item-id');
-            const itemTypeAttr = cartItem.getAttribute('data-item-type');
-
-            if (!itemIdAttr || !itemTypeAttr) return;
-
-            const itemId = parseInt(itemIdAttr, 10);
-            const itemType = itemTypeAttr;
-            const newQuantity = parseInt(e.target.value, 10);
-
-            // Find the item in the state
-            const itemIndex = _state.cartItems.findIndex(
-                item => item.id === itemId && item.type === itemType
-            );
-
-            if (itemIndex === -1) return;
-
-            const cartItemObj = _state.cartItems[itemIndex];
-
-            // Check stock limit for products
-            if (itemType === 'product' && cartItemObj.stockQuantity !== undefined) {
-                if (newQuantity > cartItemObj.stockQuantity) {
-                    _showNotification(`Only ${cartItemObj.stockQuantity} items available in stock`, 'error');
-                    e.target.value = cartItemObj.quantity; // Reset to previous value
-                    return;
-                }
-            }
-
-            if (!isNaN(newQuantity) && newQuantity > 0) {
-                // Update quantity in state
-                _state.cartItems[itemIndex].quantity = newQuantity;
-                _updateCartSummary();
-            } else {
-                // Reset to 1 if invalid and update view
-                e.target.value = 1;
-                // Update state to match
-                _state.cartItems[itemIndex].quantity = 1;
-                _updateCartSummary();
-            }
-        }
-
-        // Handle remove item from cart
-        function _handleRemoveItem(e) {
-            const removeBtn = e.target.closest('.remove-item-btn');
-            if (!removeBtn) return;
-
-            const cartItem = removeBtn.closest('.cart-item');
-            if (!cartItem) return;
-
-            const itemIdAttr = cartItem.getAttribute('data-item-id');
-            const itemTypeAttr = cartItem.getAttribute('data-item-type');
-
-            if (!itemIdAttr || !itemTypeAttr) return;
-
-            const itemId = parseInt(itemIdAttr, 10);
-            const itemType = itemTypeAttr;
-
-            // Find item index with validation
-            const itemIndex = _state.cartItems.findIndex(
-                item => item.id === itemId && item.type === itemType
-            );
-
-            if (itemIndex === -1) return;
-
-            // Remove from data
-            _state.cartItems.splice(itemIndex, 1);
-
-            // Animate removal for better UX
-            cartItem.style.transition = 'opacity 200ms, transform 200ms';
-            cartItem.style.opacity = '0';
-            cartItem.style.transform = 'translateX(10px)';
-
-            // Remove from DOM after animation
-            cartItem.addEventListener('transitionend', function (event) {
-                // Only remove when opacity transition completes
-                if (event.propertyName === 'opacity' && cartItem.parentNode) {
-                    cartItem.parentNode.removeChild(cartItem);
-
-                    // Update empty cart message after removing
-                    _updateEmptyCartMessage();
-                }
-            }, { once: true });
-
-            // Update summary immediately
-            _updateCartSummary();
-        }
-
-        // Handle payment process - OPTIMIZED: Better validation, inline helper functions
-        function _handlePayment() {
-            if (_state.cartItems.length === 0) {
-                _showNotification('Cart is empty! Please add items before checkout.', 'error');
-                return;
-            }
-
-            // Calculate totals with a single reduce operation
-            const totals = _state.cartItems.reduce((acc, item) => {
-                acc.quantity += item.quantity;
-                acc.subtotal += item.price * item.quantity;
-                return acc;
-            }, { quantity: 0, subtotal: 0 });
-
-            // Apply discount with clamping
-            const discountPercentage = Math.max(0, Math.min(100, _state.discountPercentage));
-            const discountAmount = (totals.subtotal * discountPercentage) / 100;
-            const totalAfterDiscount = totals.subtotal - discountAmount;
-
-            // Check if amount received is enough for cash payments
-            if (_state.amountReceived < totalAfterDiscount && _state.paymentMethod === 'cash') {
-                _showNotification('Insufficient amount received', 'error');
-
-                // Focus the input field for better UX
-                const amountInput = _cache.elements['amount-received-input'];
-                if (amountInput) {
-                    setTimeout(() => amountInput.focus(), 100);
-                }
-                return;
-            }
-
-            // Get and validate customer name
-            const customerNameInput = _cache.elements['customer-name'];
-            if (!customerNameInput) return;
-
-            const customerName = customerNameInput.value.trim();
-            if (!customerName) {
-                _showNotification('Please enter customer name', 'error');
-
-                // Focus the name field
-                setTimeout(() => customerNameInput.focus(), 100);
-                return;
-            }
-
-            // Show payment confirmation
-            _showPaymentConfirmation(customerName, totals.quantity, totals.subtotal, discountAmount, totalAfterDiscount);
-        }
-
-        // Show payment confirmation modal - OPTIMIZED: Better DOM creation, fewer reflows, template caching
-        function _showPaymentConfirmation(customerName, totalQuantity, subtotal, discountAmount, totalAfterDiscount) {
-            // Create a lightweight modal component
-            const modalId = 'payment-confirmation-modal';
-
-            // Remove any existing modal first (prevent duplicates)
-            const existingModal = document.getElementById(modalId);
-            if (existingModal) existingModal.remove();
-
-            // Pre-calculate values to avoid repeated calculations in the template
-            const amountReceived = _state.amountReceived;
-            const change = Math.max(0, amountReceived - totalAfterDiscount);
-            const discountPercentage = _state.discountPercentage;
-
-            // Create modal backdrop first
-            const backdrop = document.createElement('div');
-            backdrop.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            backdrop.id = modalId;
-
-            // Generate cart items HTML with a single string builder pattern
-            let cartItemsHtml = '';
-
-            // Use faster iteration pattern
-            for (let i = 0; i < _state.cartItems.length; i++) {
-                const item = _state.cartItems[i];
-                const itemTotal = item.price * item.quantity;
-
-                cartItemsHtml += `
-                    <tr class="border-b">
-                        <td class="py-2 px-4">${item.name}</td>
-                        <td class="py-2 px-4 text-center">${item.quantity}</td>
-                        <td class="py-2 px-4 text-right">${_formatCurrency(item.price)}</td>
-                        <td class="py-2 px-4 text-right">${_formatCurrency(itemTotal)}</td>
-                    </tr>
-                `;
-            }
-
-            // Use a single template literal for the modal content
-            const modalContent = `
-                <div class="bg-white rounded-lg shadow-xl w-2/3 max-w-2xl max-h-[80vh] flex flex-col">
-                    <div class="p-4 flex justify-between items-center border-b">
-                        <h3 class="text-lg font-semibold">
-                            <span class="text-pink-500">Confirm</span>
-                            <span class="text-black">Payment</span>
-                        </h3>
-                        <button id="close-confirmation" class="text-gray-500 hover:text-gray-700">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            card.innerHTML = `
+                <div class="flex flex-col w-full">
+                    <div class="status-badge self-end mb-1 text-center text-xs ${this.getStatusClass(product.status)}">${product.status}</div>
+                    <div class="w-full flex justify-center">
+                        <img class="h-10 object-contain mb-1" src="${product.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA4VjE2TTggMTJIMTYiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+'}" alt="${product.name}">
                     </div>
-                    <div class="p-4 overflow-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <p class="font-semibold">Customer:</p>
-                            <p>${customerName}</p>
-                        </div>
-                        <p class="mb-4">Please verify the items and quantities below:</p>
-                        <div class="max-h-64 overflow-y-auto mb-4 custom-scrollbar">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="py-2 px-4 text-left font-medium text-gray-500">Item</th>
-                                        <th class="py-2 px-4 text-center font-medium text-gray-500">Qty</th>
-                                        <th class="py-2 px-4 text-right font-medium text-gray-500">Price</th>
-                                        <th class="py-2 px-4 text-right font-medium text-gray-500">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${cartItemsHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="border-t pt-2">
-                            <div class="flex justify-between mb-1">
-                                <span>Subtotal:</span>
-                                <span>${_formatCurrency(subtotal)}</span>
-                            </div>
-                            <div class="flex justify-between mb-1">
-                                <span>Discount (${discountPercentage}%):</span>
-                                <span>${_formatCurrency(discountAmount)}</span>
-                            </div>
-                            <div class="flex justify-between font-bold text-lg">
-                                <span>Total:</span>
-                                <span class="text-pink-500">${_formatCurrency(totalAfterDiscount)}</span>
-                            </div>
-                            <div class="mt-2 flex justify-between">
-                                <span>Payment Method:</span>
-                                <span class="capitalize">${_state.paymentMethod}</span>
-                            </div>
-                            <div class="flex justify-between mb-1">
-                                <span>Amount Received:</span>
-                                <span>${_formatCurrency(amountReceived)}</span>
-                            </div>
-                            <div class="flex justify-between mb-1">
-                                <span>Change:</span>
-                                <span>${_formatCurrency(change)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-4 border-t flex justify-end gap-2">
-                        <button id="cancel-payment" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">
-                            Cancel
-                        </button>
-                        <button id="confirm-payment" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded">
-                            Confirm Payment
-                        </button>
+                </div>
+                <div class="text-center w-full flex flex-col justify-between flex-grow">
+                    <p class="font-semibold text-[10px] leading-tight line-clamp-2">${product.name}</p>
+                    <div>
+                        <p class="text-[10px] text-gray-600 truncate w-full">${product.size}</p>
+                        <p class="text-pink-500 font-bold text-[10px] mt-0.5">${this.formatCurrency(product.price)}</p>
                     </div>
                 </div>
             `;
 
-            // Set inner HTML only once for better performance
-            backdrop.innerHTML = modalContent;
-            document.body.appendChild(backdrop);
+            if (!isOutOfStock) {
+                card.addEventListener('click', () => this.addToCart('product', product));
+            }
+            return card;
+        },
 
-            // Add event listeners (using event delegation where possible)
-            const closeButtons = ['close-confirmation', 'cancel-payment'];
-            closeButtons.forEach(id => {
-                document.getElementById(id).addEventListener('click', () => {
-                    backdrop.remove();
-                }, { once: true }); // Use once:true for automatic cleanup
+        // Render services
+        renderServices() {
+            if (!this.elements.servicesContainer) return;
+
+            this.elements.servicesContainer.innerHTML = '';
+
+            this.services.forEach(service => {
+                const serviceCard = this.createServiceCard(service);
+                this.elements.servicesContainer.appendChild(serviceCard);
             });
+        },
 
-            // Handle payment confirmation
-            document.getElementById('confirm-payment').addEventListener('click', () => {
-                _processPayment(customerName, totalQuantity, totalAfterDiscount);
-                backdrop.remove();
-            }, { once: true });
+        // Create service card
+        createServiceCard(service) {
+            const card = document.createElement('div');
+            card.className = 'service-card p-2 bg-white rounded-lg shadow hover:shadow-md transition-shadow flex flex-col justify-between items-center w-24 h-32 cursor-pointer border border-gray-200';
+            card.dataset.serviceId = service.id;
 
-            // Close on backdrop click (using e.target check for better performance)
-            backdrop.addEventListener('click', (e) => {
-                if (e.target === backdrop) {
-                    backdrop.remove();
-                }
-            });
-        }
+            const isInactive = service.status !== 'active';
+            if (isInactive) {
+                card.classList.add('opacity-60', 'pos-disabled');
+                card.style.pointerEvents = 'none';
+            }
 
-        // Process the payment after confirmation - UPDATED: Handle inventory update for products
-        function _processPayment(customerName, totalQuantity, totalAmount) {
-            // Show success message
-            _showNotification(`Payment of ${_formatCurrency(totalAmount)} processed successfully via ${_state.paymentMethod}!`);
-
-            // Create sale record for today
-            const date = new Date();
-            const sale = {
-                invoice: _cache.elements['invoice-number'].textContent,
-                customer: customerName,
-                items: totalQuantity,
-                total: totalAmount,
-                time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-
-            // Add to daily sales data
-            _cache.data.dailySales.unshift(sale);
-
-            // Add to the table (if visible) - create element once, set content once
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-4 py-2 border-b">${sale.invoice}</td>
-                <td class="px-4 py-2 border-b">${sale.customer}</td>
-                <td class="px-4 py-2 border-b">${sale.items}</td>
-                <td class="px-4 py-2 border-b">₱ ${sale.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td class="px-4 py-2 border-b">${sale.time}</td>
+            card.innerHTML = `
+                <div class="flex flex-col w-full">
+                    <div class="status-badge self-end mb-1 text-center text-xs ${this.getStatusClass(service.status)}">${service.status}</div>
+                    <div class="w-full flex justify-center">
+                        <img class="h-10 object-contain mb-1" src="${service.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04IDZMOCA2SDhTOSAxNSAxMCAxNkgxNFMxNSAxNSAxNiA2SDE2SDgiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+'}" alt="${service.name}">
+                    </div>
+                </div>
+                <div class="text-center w-full flex flex-col justify-between flex-grow">
+                    <p class="font-semibold text-[10px] leading-tight line-clamp-2">${service.name}</p>
+                    <div>
+                        <p class="text-[10px] text-gray-600 truncate w-full">${service.duration || '30 min'}</p>
+                        <p class="text-pink-500 font-bold text-[10px] mt-0.5">${this.formatCurrency(service.price)}</p>
+                    </div>
+                </div>
             `;
 
-            // Prepend to keep newest sales at top
-            _cache.elements['daily-sales-tbody'].prepend(row);
+            if (!isInactive) {
+                card.addEventListener('click', () => this.addToCart('service', service));
+            }
+            return card;
+        },
 
-            // Update product inventory in the local cache
-            _state.cartItems.forEach(item => {
-                if (item.type === 'product') {
-                    // Find the product in the cache data
-                    const productIndex = _cache.data.products.findIndex(p => p.id === item.id);
-                    if (productIndex !== -1) {
-                        // Reduce the quantity
-                        _cache.data.products[productIndex].quantity -= item.quantity;
+        // Add item to cart
+        addToCart(type, item) {
+            const existingItem = this.cart.find(cartItem =>
+                cartItem.type === type && cartItem.id === item.id
+            );
 
-                        // Update status
-                        const newQuantity = _cache.data.products[productIndex].quantity;
-                        _cache.data.products[productIndex].status =
-                            newQuantity === 0 ? 'out of stock' :
-                                newQuantity < 10 ? 'low stock' : 'in stock';
-                    }
+            if (existingItem) {
+                // Check stock for products
+                if (type === 'product' && existingItem.quantity >= item.quantity) {
+                    this.showNotification('Not enough stock available', 'error');
+                    return;
+                }
+                existingItem.quantity++;
+            } else {
+                this.cart.push({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1,
+                    type: type,
+                    maxQuantity: type === 'product' ? item.quantity : null
+                });
+            }
+
+            this.renderCart();
+            this.updateSummary();
+        },
+
+        // Render cart
+        renderCart() {
+            this.elements.cartContainer.innerHTML = '';
+
+            if (this.cart.length === 0) {
+                this.elements.cartContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        <svg class="w-8 h-8 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <p class="mt-1 text-sm">Cart is empty</p>
+                        <p class="text-xs">Add products or services to begin</p>
+                    </div>
+                `;
+                return;
+            }
+
+            this.cart.forEach((item, index) => {
+                const cartItem = this.createCartItem(item, index);
+                this.elements.cartContainer.appendChild(cartItem);
+            });
+        },
+
+        // Create cart item
+        createCartItem(item, index) {
+            const div = document.createElement('div');
+            div.className = 'mb-2 p-1.5 flex justify-between items-center bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors';
+
+            div.innerHTML = `
+                <div class="flex-grow pr-1">
+                    <p class="font-medium text-xs">${item.name}</p>
+                    <p class="text-pink-500 font-semibold text-xs">${this.formatCurrency(item.price)}</p>
+                </div>
+                <div class="flex items-center">
+                    <button class="text-gray-500 hover:text-gray-700 p-0.5 decrement-btn" data-index="${index}">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                        </svg>
+                    </button>
+                    <input type="number" value="${item.quantity}" min="1" class="w-11 text-center mx-0.5 bg-white border border-gray-200 rounded py-0.5 text-xs quantity-input" data-index="${index}">
+                    <button class="text-gray-500 hover:text-gray-700 p-0.5 increment-btn" data-index="${index}">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
+                    <button class="text-red-500 hover:text-red-700 ml-1 p-0.5 remove-btn" data-index="${index}">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            return div;
+        },
+
+        // Update cart summary
+        updateSummary() {
+            const totalQuantity = this.cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountAmount = (subtotal * this.discount) / 100;
+            const total = subtotal - discountAmount;
+            const change = Math.max(0, this.amountReceived - total);
+
+            this.elements.totalQuantity.textContent = totalQuantity;
+            this.elements.subtotal.textContent = this.formatCurrency(subtotal);
+            this.elements.discountAmount.textContent = this.formatCurrency(discountAmount);
+            this.elements.totalAmount.textContent = this.formatCurrency(total);
+            this.elements.changeAmount.textContent = this.formatCurrency(change);
+        },
+
+        // Setup event listeners
+        setupEventListeners() {
+            // Tab switching
+            this.elements.tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => this.switchTab(e.target.closest('.pos-tab')));
+            });
+
+            // Cart interactions
+            this.elements.cartContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const index = parseInt(button.dataset.index);
+                if (isNaN(index)) return;
+
+                if (button.classList.contains('increment-btn')) {
+                    this.incrementItem(index);
+                } else if (button.classList.contains('decrement-btn')) {
+                    this.decrementItem(index);
+                } else if (button.classList.contains('remove-btn')) {
+                    this.removeItem(index);
                 }
             });
 
-            // Reset state
-            _state.cartItems = [];
-            _cache.elements['cart-items-container'].innerHTML = '';
-            _state.amountReceived = 0;
-            _cache.elements['amount-received-input'].value = '0.00';
-            _state.discountPercentage = 0;
-            _cache.elements['discount-input'].value = '0';
-            _cache.elements['customer-name'].value = '';
-
-            // Update cart summary
-            _updateCartSummary();
-            _updateEmptyCartMessage();
-
-            // Generate new invoice number
-            _generateInvoiceNumber();
-
-            // Rerender products to reflect inventory changes
-            _renderProducts();
-        }
-
-        // Ensure initial tab is active with indicators showing
-        function _initializeActiveTab() {
-            // Set the first tab as active by default
-            if (_cache.elements.tabs && _cache.elements.tabs.length > 0) {
-                const firstTab = _cache.elements.tabs[0];
-                const firstTabId = firstTab.getAttribute('data-tab');
-
-                // Add active class to first tab
-                firstTab.classList.add('active');
-
-                // Show first tab content
-                _cache.elements.tabContents.forEach(content => {
-                    if (content.id === firstTabId) {
-                        content.style.display = 'block';
-                        content.classList.add('fade-in');
-                    } else {
-                        content.style.display = 'none';
-                    }
-                });
-            }
-        }
-
-        // Bind all event listeners (using event delegation where possible)
-        function _bindEvents() {
-            // Tab switching
-            _cache.elements.tabs.forEach(tab => {
-                tab.addEventListener('click', _handleTabClick);
+            this.elements.cartContainer.addEventListener('change', (e) => {
+                if (e.target.classList.contains('quantity-input')) {
+                    const index = parseInt(e.target.dataset.index);
+                    this.updateItemQuantity(index, parseInt(e.target.value));
+                }
             });
 
-            // Product search with debounce
-            _cache.elements['product-search'].addEventListener('input', _handleProductSearch);
-
-            // Payment method change
-            _cache.elements['payment-method'].addEventListener('change', e => {
-                _state.paymentMethod = e.target.value;
+            // Discount input
+            this.elements.discountInput.addEventListener('input', (e) => {
+                this.discount = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+                this.updateSummary();
             });
 
             // Amount received input
-            _cache.elements['amount-received-input'].addEventListener('input', _handleAmountReceivedChange);
-
-            // Discount input
-            _cache.elements['discount-input'].addEventListener('input', _handleDiscountChange);
+            this.elements.amountReceived.addEventListener('input', (e) => {
+                this.amountReceived = parseFloat(e.target.value) || 0;
+                this.updateSummary();
+            });
 
             // Pay button
-            _cache.elements['pay-button'].addEventListener('click', _handlePayment);
+            this.elements.payButton.addEventListener('click', () => this.processPayment());
+        },
 
-            // Use event delegation for product & service selection
-            _cache.elements['products-container'].addEventListener('click', _handleProductSelection);
-            _cache.elements['services-container'].addEventListener('click', _handleServiceSelection);
+        // Cart item methods
+        incrementItem(index) {
+            const item = this.cart[index];
+            if (item.type === 'product' && item.maxQuantity && item.quantity >= item.maxQuantity) {
+                this.showNotification('Not enough stock available', 'error');
+                return;
+            }
+            item.quantity++;
+            this.renderCart();
+            this.updateSummary();
+        },
 
-            // Cart item events - using event delegation for better performance
-            _cache.elements['cart-items-container'].addEventListener('change', _handleQuantityChange);
-            _cache.elements['cart-items-container'].addEventListener('click', _handleRemoveItem);
-        }
+        decrementItem(index) {
+            const item = this.cart[index];
+            if (item.quantity > 1) {
+                item.quantity--;
+                this.renderCart();
+                this.updateSummary();
+            }
+        },
 
-        // Initialize the POS system 
-        function init() {
-            // Cache DOM elements for better performance
-            _cacheElements();
+        removeItem(index) {
+            this.cart.splice(index, 1);
+            this.renderCart();
+            this.updateSummary();
+        },
 
-            // Load data from the database
-            _loadProductsFromDatabase();
-            _loadServicesFromDatabase();
+        updateItemQuantity(index, quantity) {
+            const item = this.cart[index];
+            if (quantity < 1) return;
 
-            // Setup initial data
-            _setupCurrentDate();
-            _generateInvoiceNumber();
+            if (item.type === 'product' && item.maxQuantity && quantity > item.maxQuantity) {
+                this.showNotification('Not enough stock available', 'error');
+                return;
+            }
 
-            // Render all components in a single layout reflow
-            // Use requestAnimationFrame to batch UI updates
-            requestAnimationFrame(() => {
-                _renderProducts();
-                _renderServices();
-                _generateDailySales();
+            item.quantity = quantity;
+            this.updateSummary();
+        },
 
-                // Initialize the active tab
-                _initializeActiveTab();
+        // Process payment
+        async processPayment() {
+            if (this.cart.length === 0) {
+                this.showNotification('Cart is empty!', 'error');
+                return;
+            }
 
-                // Bind events after DOM is ready
-                _bindEvents();
+            const customerName = this.elements.customerName.value.trim();
+            if (!customerName) {
+                this.showNotification('Please enter customer name', 'error');
+                this.elements.customerName.focus();
+                return;
+            }
+
+            const subtotal = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal - (subtotal * this.discount / 100);
+
+            if (this.amountReceived < total) {
+                this.showNotification('Insufficient amount received', 'error');
+                this.elements.amountReceived.focus();
+                return;
+            }
+
+            // Show loading
+            this.elements.payButton.disabled = true;
+            this.elements.payButton.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/sales', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        customer_name: customerName,
+                        subtotal_cost: subtotal,
+                        discount_perc: this.discount,
+                        total_cost: total,
+                        branch: 'valencia', // Default branch, you can make this dynamic
+                        product_items: this.cart.filter(item => item.type === 'product').map(item => ({
+                            id: item.id,
+                            quantity: item.quantity
+                        })),
+                        service_items: this.cart.filter(item => item.type === 'service').map(item => ({
+                            id: item.id,
+                            quantity: item.quantity
+                        }))
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showNotification('Payment processed successfully!', 'success');
+                    this.resetPOS();
+                    this.loadDailySales();
+                    this.updateProductInventory();
+                } else {
+                    this.showNotification(data.message || 'Payment failed', 'error');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                this.showNotification('Payment failed. Please try again.', 'error');
+            } finally {
+                this.elements.payButton.disabled = false;
+                this.elements.payButton.innerHTML = `
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Pay Now
+                `;
+            }
+        },
+
+        // Reset POS after successful sale
+        resetPOS() {
+            this.cart = [];
+            this.discount = 0;
+            this.amountReceived = 0;
+
+            this.elements.customerName.value = '';
+            this.elements.discountInput.value = '0';
+            this.elements.amountReceived.value = '0';
+
+            this.renderCart();
+            this.updateSummary();
+            this.generateInvoiceNumber();
+        },
+
+        // Update product inventory after sale
+        updateProductInventory() {
+            this.cart.forEach(item => {
+                if (item.type === 'product') {
+                    const product = this.products.find(p => p.id === item.id);
+                    if (product) {
+                        product.quantity -= item.quantity;
+                        product.status = product.quantity === 0 ? 'out of stock' :
+                            product.quantity < 10 ? 'low stock' : 'in stock';
+                    }
+                }
             });
+            this.renderProducts();
+        },
+
+        // Load daily sales
+        async loadDailySales() {
+            try {
+                const response = await fetch('/api/sales/daily');
+                const sales = await response.json();
+
+                this.elements.dailySalesTable.innerHTML = '';
+
+                if (sales.length === 0) {
+                    this.elements.dailySalesTable.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="py-4 text-center text-gray-500">No sales recorded today</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                sales.forEach(sale => {
+                    const row = document.createElement('tr');
+                    const time = new Date(sale.created_at).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    row.innerHTML = `
+                        <td class="px-4 py-2 border-b text-sm">${sale.sale_ID}</td>
+                        <td class="px-4 py-2 border-b text-sm">${sale.customer_name}</td>
+                        <td class="px-4 py-2 border-b text-sm">${sale.total_items || 0}</td>
+                        <td class="px-4 py-2 border-b text-sm">${this.formatCurrency(sale.total_cost)}</td>
+                        <td class="px-4 py-2 border-b text-sm">${time}</td>
+                    `;
+
+                    this.elements.dailySalesTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading daily sales:', error);
+                this.elements.dailySalesTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-4 text-center text-red-500">Error loading sales data</td>
+                    </tr>
+                `;
+            }
+        },
+
+        // Switch tabs
+        switchTab(clickedTab) {
+            const tabId = clickedTab.dataset.tab;
+
+            // Update tab indicators
+            this.elements.tabs.forEach(tab => {
+                const isActive = tab === clickedTab;
+                tab.classList.toggle('active', isActive);
+
+                const indicator = tab.querySelector('.tab-indicator');
+                if (indicator) {
+                    indicator.style.display = isActive ? 'block' : 'none';
+                }
+
+                const text = tab.querySelector('.tab-text');
+                if (text) {
+                    text.style.color = isActive ? '#db2777' : '';
+                }
+            });
+
+            // Update content visibility
+            this.elements.tabContents.forEach(content => {
+                content.style.display = content.id === tabId ? 'block' : 'none';
+            });
+
+            // Load daily sales when tab is selected
+            if (tabId === 'daily-sales') {
+                this.loadDailySales();
+            }
+        },
+
+        // Utility methods
+        formatCurrency(amount) {
+            return `₱ ${parseFloat(amount).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        },
+
+        getStatusClass(status) {
+            const statusClasses = {
+                'in stock': 'status-in-stock',
+                'low stock': 'status-low-stock',
+                'out of stock': 'status-out-of-stock',
+                'active': 'status-active',
+                'inactive': 'status-inactive'
+            };
+            return statusClasses[status] || '';
+        },
+
+        updateDateTime() {
+            const date = new Date();
+            this.elements.currentDate.textContent = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            this.generateInvoiceNumber();
+        },
+
+        generateInvoiceNumber() {
+            const invoiceNumber = 100000 + Math.floor(Math.random() * 900000);
+            this.elements.invoiceNumber.textContent = invoiceNumber;
+        },
+
+        showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 p-3 rounded-lg shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                }`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
+    };
 
-        // Define public API
-        return {
-            init: init
-        };
-    })();
-
-    // Initialize the POS system
+    // Initialize POS
     POS.init();
 });
