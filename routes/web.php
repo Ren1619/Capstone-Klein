@@ -13,6 +13,10 @@ use App\Http\Controllers\Patients\VisitController;
 use App\Http\Controllers\Patients\AllergyController;
 use App\Http\Controllers\Patients\MedicalConditionController;
 use App\Http\Controllers\Patients\MedicationController;
+use App\Http\Controllers\Patients\VisitServiceController;
+use App\Http\Controllers\Patients\VisitProductController;
+use App\Http\Controllers\Patients\DiagnosisController;
+use App\Http\Controllers\Patients\PrescriptionController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -164,4 +168,15 @@ Route::get('/patientsRecord', function () {
 });
 
 
+// Prescription routes
+Route::resource('prescriptions', PrescriptionController::class);
+
+// Visit services routes
+Route::resource('visit-services', VisitServiceController::class);
+
+// Visit product routes
+Route::resource('visit-products', VisitProductController::class);
+
+// Diagnosis routes
+Route::resource('diagnoses', DiagnosisController::class);
 
