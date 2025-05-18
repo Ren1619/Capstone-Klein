@@ -178,5 +178,5 @@ Route::resource('visit-services', VisitServiceController::class);
 Route::resource('visit-products', VisitProductController::class);
 
 // Diagnosis routes
-Route::resource('diagnoses', DiagnosisController::class);
+Route::resource('diagnosis', DiagnosisController::class);
 

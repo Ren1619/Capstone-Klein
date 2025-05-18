@@ -25,7 +25,6 @@ class Diagnosis extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'account_ID',
         'visit_ID',
         'note',
     ];
