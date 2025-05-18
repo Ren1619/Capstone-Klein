@@ -383,7 +383,7 @@ class VisitController extends Controller
         // $patients = VisitHistory::all();
 
         // Return the correct view with all necessary data
-        return view('patient_detials_tab_navigation.show', compact('visits', 'search', 'timeFilter', 'patients'));
+        return view('patients record.show', compact('visits', 'search', 'timeFilter', 'patients'));
     }
 
   
@@ -533,7 +533,7 @@ class VisitController extends Controller
                 'prescriptions'
             ]);
 
-            return view('patients_record.patient_visit', compact('visitRecord'));
+            return view('patients record.patient_visit', compact('visitRecord'));
 
 
         } catch (\Exception $e) {
@@ -549,7 +549,7 @@ class VisitController extends Controller
                 ], 404);
             }
 
-            return view('patients_record.patient_visit')->with('error_message', 'Failed to find visit record: ' . $e->getMessage());
+            return view('patients record.patient_visit')->with('error_message', 'Failed to find visit record: ' . $e->getMessage());
         }
     }
 
