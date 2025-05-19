@@ -313,13 +313,13 @@
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     <span class="font-normal">{{ $visitProduct->product->name ?? 'Unknown Product' }}</span>
                                     <!-- @if($visitProduct->note)
-                                            <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
-                                        @endif
-                                        @if($visitProduct->quantity)
-                                            <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
-                                                Qty: {{ $visitProduct->quantity }}
-                                            </span>
-                                        @endif -->
+                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
+                                    @endif
+                                    @if($visitProduct->quantity)
+                                        <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
+                                            Qty: {{ $visitProduct->quantity }}
+                                        </span>
+                                    @endif -->
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
@@ -370,13 +370,13 @@
                                 <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                 <span class="font-normal">{{ $visitProduct->product->name ?? 'Unknown Product' }}</span>
                                 <!-- @if($visitProduct->quantity)
-                                        <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
-                                            Qty: {{ $visitProduct->quantity }}
-                                        </span>
-                                    @endif -->
+                                    <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
+                                        Qty: {{ $visitProduct->quantity }}
+                                    </span>
+                                @endif -->
                                 <!-- @if($visitProduct->note)
-                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
-                                    @endif -->
+                                    <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
+                                @endif -->
                             </div>
 
                             <div class="flex items-center gap-2">
@@ -542,7 +542,6 @@
 
 
     {{-- for tab functionality --}}
-    
     <script>
 
 
@@ -1169,7 +1168,7 @@
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#F91D7C',
-                        cancelButtonColor: '#000000',
+                        cancelButtonColor: '#718096',
                         confirmButtonText: 'Yes, delete it',
                         cancelButtonText: 'Cancel'
                     }).then((result) => {
@@ -1507,7 +1506,7 @@
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#F91D7C',
-                        cancelButtonColor: '#000000',
+                        cancelButtonColor: '#6B7280',
                         confirmButtonText: 'Yes, delete it!'
                     }).then((result) => {
                         if (result.isConfirmed) {
@@ -2011,82 +2010,7 @@
             /**
              * Populate the edit form with product data
              */
-            // function populateEditForm(visitProduct) {
-            console.log("Populating edit form with product data:", visitProduct);
-
-            // Check if form exists
-            if (!productForm) {
-                console.error("Product form not found");
-                return;
-            }
-
-            // Set form values
-            document.getElementById('visit_ID').value = visitProduct.visit_ID;
-            console.log("Set visit_ID to:", visitProduct.visit_ID);
-
-            // Store the product ID for update
-            productForm.dataset.productId = visitProduct.visit_products_ID;
-            console.log("Set form product ID to:", visitProduct.visit_products_ID);
-
-            // Update the form title to indicate editing
-            const modalHeader = document.querySelector('#addProductModal h3');
-            if (modalHeader) {
-                modalHeader.innerHTML = '<span class="text-[#F91D7C]">Edit</span> Product';
-            }
-
-            // Populate products dropdown first
-            populateProductsDropdown();
-
-            // Set product selection after dropdown is populated
-            setTimeout(() => {
-                const productSelect = document.getElementById('product_ID');
-                if (productSelect && visitProduct.product_ID) {
-                    const options = Array.from(productSelect.options);
-                    const foundOption = options.find(option => option.value == visitProduct.product_ID);
-                    if (foundOption) {
-                        foundOption.selected = true;
-                        console.log("Selected existing option:", foundOption.textContent);
-                    } else {
-                        // If product option doesn't exist in dropdown, create a temporary option
-                        const newOption = document.createElement('option');
-                        newOption.value = visitProduct.product_ID;
-                        newOption.textContent = visitProduct.product.name + ' - ₱' + parseFloat(visitProduct.product.price).toFixed(2);
-                        newOption.selected = true;
-                        productSelect.appendChild(newOption);
-                        console.log("Created and selected new option:", newOption.textContent);
-                    }
-                }
-
-                // Set quantity if it exists
-                // const quantityInput = document.getElementById('quantity');
-                // if (quantityInput) {
-                //     quantityInput.value = visitProduct.quantity || 1;
-                //     console.log("Set quantity to:", quantityInput.value);
-                // }
-
-                // Set note
-                const noteInput = document.getElementById('note');
-                if (noteInput) {
-                    noteInput.value = visitProduct.note || '';
-                    console.log("Set note to:", noteInput.value);
-                }
-
-                // Change submit button text
-                const submitButton = productForm.querySelector('button[type="submit"]');
-                if (submitButton) {
-                    submitButton.textContent = 'Update';
-                }
-            }, 100);
-
-            // Show the modal
-            addProductModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-/**
- * Populate the edit form with product data - Fixed Note Retrieval
- */
-function populateEditForm(visitProduct) {
+            function populateEditForm(visitProduct) {
                 console.log("Populating edit form with product data:", visitProduct);
 
                 // Check if form exists
@@ -2139,14 +2063,11 @@ function populateEditForm(visitProduct) {
                         console.log("Set quantity to:", quantityInput.value);
                     }
 
-                    // *** NEW CODE: Use the exact same approach as view product modal ***
-                    // Set note - use same technique as view product modal
+                    // Set note
                     const noteInput = document.getElementById('note');
                     if (noteInput) {
-                        // Extract note exactly the same way as view product modal
-                        const noteContent = visitProduct.note || '';
-                        noteInput.value = noteContent;
-                        console.log("Set note to:", noteContent);
+                        noteInput.value = visitProduct.note || '';
+                        console.log("Set note to:", noteInput.value);
                     }
 
                     // Change submit button text
@@ -2162,149 +2083,151 @@ function populateEditForm(visitProduct) {
             }
 
 
+
+
             // delete
 
             // Find all delete product forms
             const deleteForms = document.querySelectorAll('.delete-product-form');
 
-        // Add submit event listener to each form
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault(); // Prevent normal form submission
+            // Add submit event listener to each form
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault(); // Prevent normal form submission
 
-                // Create FormData object from the form
-                const formData = new FormData(this);
+                    // Create FormData object from the form
+                    const formData = new FormData(this);
 
-                // Send form using fetch
-                fetch(this.action, {
-                    method: 'POST', // Always POST because method spoofing is handled by Laravel
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest' // Add this for better Laravel compatibility
-                    }
-                })
-                    .then(response => {
-                        // Log the raw response for debugging
-                        console.log("Response status:", response.status);
-                        console.log("Response headers:", [...response.headers.entries()]);
-
-                        // Check if the response can be parsed as JSON
-                        const contentType = response.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            return response.json().then(data => {
-                                // Even if response.ok is false, we return the parsed data
-                                // to handle it in the next .then block
-                                return {
-                                    ok: response.ok,
-                                    status: response.status,
-                                    data: data
-                                };
-                            });
-                        } else {
-                            // For non-JSON responses
-                            return response.text().then(text => {
-                                return {
-                                    ok: response.ok,
-                                    status: response.status,
-                                    text: text
-                                };
-                            });
+                    // Send form using fetch
+                    fetch(this.action, {
+                        method: 'POST', // Always POST because method spoofing is handled by Laravel
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest' // Add this for better Laravel compatibility
                         }
                     })
-                    .then(result => {
-                        // Log the processed result for debugging
-                        console.log("Processed result:", result);
+                        .then(response => {
+                            // Log the raw response for debugging
+                            console.log("Response status:", response.status);
+                            console.log("Response headers:", [...response.headers.entries()]);
 
-                        // Handle success even if the response doesn't have a success property
-                        // Some Laravel responses may just return a 200 OK without a specific success flag
-                        if (result.ok || (result.data && result.data.success)) {
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Product deleted successfully!',
-                                    confirmButtonColor: '#F91D7C'
-                                }).then(() => {
-                                    window.location.reload();
+                            // Check if the response can be parsed as JSON
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                return response.json().then(data => {
+                                    // Even if response.ok is false, we return the parsed data
+                                    // to handle it in the next .then block
+                                    return {
+                                        ok: response.ok,
+                                        status: response.status,
+                                        data: data
+                                    };
                                 });
                             } else {
-                                alert('Product deleted successfully!');
-                                window.location.reload();
+                                // For non-JSON responses
+                                return response.text().then(text => {
+                                    return {
+                                        ok: response.ok,
+                                        status: response.status,
+                                        text: text
+                                    };
+                                });
                             }
-                        } else {
-                            // Handle error responses
-                            const errorMessage = result.data && result.data.message
-                                ? result.data.message
-                                : 'Failed to delete product';
+                        })
+                        .then(result => {
+                            // Log the processed result for debugging
+                            console.log("Processed result:", result);
 
-                            console.error('Error response:', result);
-                            showError(errorMessage);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Network or parsing error:', error);
-                        showError('An error occurred while deleting the product');
-                    });
-            });
-        });
+                            // Handle success even if the response doesn't have a success property
+                            // Some Laravel responses may just return a 200 OK without a specific success flag
+                            if (result.ok || (result.data && result.data.success)) {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: 'Product deleted successfully!',
+                                        confirmButtonColor: '#F91D7C'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    alert('Product deleted successfully!');
+                                    window.location.reload();
+                                }
+                            } else {
+                                // Handle error responses
+                                const errorMessage = result.data && result.data.message
+                                    ? result.data.message
+                                    : 'Failed to delete product';
 
-        // Make sure the showError function exists
-        function showError(message) {
-            console.error("Error message:", message);
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: message,
-                    confirmButtonColor: '#F91D7C'
+                                console.error('Error response:', result);
+                                showError(errorMessage);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Network or parsing error:', error);
+                            showError('An error occurred while deleting the product');
+                        });
                 });
-            } else {
-                alert(message);
-            }
-        }
+            });
 
-        // Add click event listener to each button to trigger form submission
-        document.querySelectorAll('.delete-product-btn').forEach(button => {
-            button.addEventListener('click', function () {
+            // Make sure the showError function exists
+            function showError(message) {
+                console.error("Error message:", message);
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: 'Are you sure?',
-                        text: "You won't be able to revert this!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#F91D7C',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
-                        }
+                        icon: 'error',
+                        title: 'Error',
+                        text: message,
+                        confirmButtonColor: '#F91D7C'
                     });
                 } else {
-                    if (confirm('Are you sure you want to delete this product?')) {
-                        this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
-                    }
+                    alert(message);
                 }
-            });
-        });
-
-        /**
-         * Show error message
-         */
-        function showError(message) {
-            console.error("Error:", message);
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: message,
-                    confirmButtonColor: '#F91D7C'
-                });
-            } else {
-                alert(message);
             }
-        }
+
+            // Add click event listener to each button to trigger form submission
+            document.querySelectorAll('.delete-product-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "You won't be able to revert this!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#F91D7C',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
+                            }
+                        });
+                    } else {
+                        if (confirm('Are you sure you want to delete this product?')) {
+                            this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
+                        }
+                    }
+                });
+            });
+
+            /**
+             * Show error message
+             */
+            function showError(message) {
+                console.error("Error:", message);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: message,
+                        confirmButtonColor: '#F91D7C'
+                    });
+                } else {
+                    alert(message);
+                }
+            }
 
         });
     </script>
