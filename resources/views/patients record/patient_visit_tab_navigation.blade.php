@@ -54,8 +54,7 @@
     <div class="p-5">
 
 
-
-
+        {{-- Visit Service Content --}}
         <div id="visit-content" class="tab-content"
             data-visit-id="{{ $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id') ?? '' }}">
 
@@ -112,14 +111,14 @@
                     </thead>
                     <tbody>
                         @forelse ($visitServices as $index => $visitService)
-                            <tr class=" border-gray-200 hover:bg-[#F91D7C]/5">
+                            <tr class="  border-b border-gray-200 hover:bg-[#F91D7C]/5">
                                 <td class="view-service-btn border-b py-3 text-black text-sm md:text-base font-normal font-poppins"
                                     data-id="{{ $visitService->visit_services_ID }}">
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     <span class="font-normal">{{ $visitService->service->name ?? 'Unknown Service' }}</span>
-                                    <!-- @if($visitService->note)
-                                                                            <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
-                                                                        @endif -->
+                                    {{-- @if($visitService->note)
+                                    <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                                    @endif --}}
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
@@ -169,9 +168,9 @@
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     {{ $visitService->service->name ?? 'Unknown Service' }}
                                 </p>
-                                <!-- @if($visitService->note)
-                                                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
-                                                                    @endif -->
+                                {{-- @if($visitService->note)
+                                <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                                @endif --}}
                             </div>
                             <div class="flex items-center gap-3">
                                 {{-- edit button --}}
@@ -254,9 +253,12 @@
 
 
 
-        {{-- Visit Product Content --}}
 
-        <div id="medical-content" class="tab-content hidden">
+
+
+        {{-- Visit Product Content --}}
+        <div id="medical-content" class="tab-content hidden"
+            data-visit-id="{{ $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id') ?? '' }}">
             <div class="flex justify-end mb-4">
                 <button id="addProductBtn" class="text-[#F91D7C] z-10 flex items-center">
                     <img src="{{ asset('icons/add_appointment.svg') }}" alt="Add Product">
@@ -264,9 +266,28 @@
             </div>
 
             @php
-                // Get products dynamically from the visit model
-                $visitProducts = $visit->products ?? [];
+                // EMERGENCY FIX: Fetch data directly if not provided
+                $visitId = $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id');
+
+                if (!isset($visit) && $visitId) {
+                    $visit = \App\Models\Patients\VisitHistory::find($visitId);
+                }
+
+                if (!isset($visitProducts) && isset($visit)) {
+                    $visitProducts = \App\Models\Patients\VisitProduct::with('product')
+                        ->where('visit_ID', $visit->visit_ID)
+                        ->get();
+                } elseif (!isset($visitProducts)) {
+                    $visitProducts = collect();
+                }
+
+                // Get all products for the dropdown
+                $allProducts = \App\Models\Product::orderBy('name', 'asc')
+                    ->get(['product_ID', 'name', 'price']);
             @endphp
+
+            {{-- Pass all products data to JavaScript through data attribute --}}
+            <div id="products-data" class="hidden" data-products="{{ json_encode($allProducts ?? []) }}"></div>
 
             {{-- Desktop View --}}
             <div class="hidden md:block">
@@ -286,19 +307,19 @@
                     </thead>
                     <tbody>
                         @forelse ($visitProducts as $index => $visitProduct)
-                            <tr class="view-product-btn border-b border-gray-200 hover:bg-[#F91D7C]/5"
-                                data-id="{{ $visitProduct->visit_products_ID }}">
-                                <td class="py-3 text-black text-sm md:text-base font-normal font-poppins">
+                            <tr class=" border-b border-gray-200 hover:bg-[#F91D7C]/5">
+                                <td class="view-product-btn py-3 text-black text-sm md:text-base font-normal font-poppins"
+                                    data-id="{{ $visitProduct->visit_products_ID }}">
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     <span class="font-normal">{{ $visitProduct->product->name ?? 'Unknown Product' }}</span>
-                                    @if($visitProduct->note)
-                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
-                                    @endif
-                                    @if($visitProduct->quantity)
-                                        <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
-                                            Qty: {{ $visitProduct->quantity }}
-                                        </span>
-                                    @endif
+                                    <!-- @if($visitProduct->note)
+                                            <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
+                                        @endif
+                                        @if($visitProduct->quantity)
+                                            <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
+                                                Qty: {{ $visitProduct->quantity }}
+                                            </span>
+                                        @endif -->
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
@@ -309,11 +330,22 @@
                                             <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                         </button>
                                         {{-- delete button --}}
-                                        <button
-                                            class="delete-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
-                                            data-id="{{ $visitProduct->visit_products_ID }}">
-                                            <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
-                                        </button>
+
+
+
+                                        <form method="POST"
+                                            action="{{ route('visit-products.destroy', $visitProduct->visit_products_ID) }}"
+                                            class="inline delete-product-form">
+                                            @csrf
+                                            @method("DELETE")
+                                            <input type="hidden" name="visit_ID" value="{{ $visit->visit_ID ?? '' }}">
+
+                                            <button type="button"
+                                                class="delete-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
+                                                onclick="confirmDeleteWithSweetAlert(this)">
+                                                <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -331,20 +363,20 @@
             {{-- Mobile View --}}
             <div class="md:hidden">
                 @forelse ($visitProducts as $index => $visitProduct)
-                    <div class="view-product-btn border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5"
-                        data-id="{{ $visitProduct->visit_products_ID }}">
+                    <div class=" border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
                         <div class="flex justify-between items-center">
-                            <div class="text-sm font-poppins">
+                            <div class="view-product-btn text-sm font-poppins"
+                                data-id="{{ $visitProduct->visit_products_ID }}">
                                 <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                 <span class="font-normal">{{ $visitProduct->product->name ?? 'Unknown Product' }}</span>
-                                @if($visitProduct->quantity)
-                                    <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
-                                        Qty: {{ $visitProduct->quantity }}
-                                    </span>
-                                @endif
-                                @if($visitProduct->note)
-                                    <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
-                                @endif
+                                <!-- @if($visitProduct->quantity)
+                                        <span class="text-xs bg-gray-100 rounded-full px-2 py-0.5 ml-2">
+                                            Qty: {{ $visitProduct->quantity }}
+                                        </span>
+                                    @endif -->
+                                <!-- @if($visitProduct->note)
+                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitProduct->note }}</p>
+                                    @endif -->
                             </div>
 
                             <div class="flex items-center gap-2">
@@ -370,6 +402,7 @@
                 @endforelse
             </div>
         </div>
+
 
 
 
@@ -508,7 +541,8 @@
 
 
 
-
+    {{-- for tab functionality --}}
+    
     <script>
 
 
@@ -688,7 +722,7 @@
 
 
 
-    <!-- diagnosis -->
+    {{-- diagnosis --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // DOM Elements
@@ -1114,7 +1148,7 @@
 
 
 
-
+    {{-- delete prescription --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Delete prescription buttons
@@ -1135,7 +1169,7 @@
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#F91D7C',
-                        cancelButtonColor: '#718096',
+                        cancelButtonColor: '#000000',
                         confirmButtonText: 'Yes, delete it',
                         cancelButtonText: 'Cancel'
                     }).then((result) => {
@@ -1192,7 +1226,7 @@
     </script>
 
 
-
+    {{-- visit service --}}
     <script>
         // Visit Services Management JavaScript
         document.addEventListener('DOMContentLoaded', function () {
@@ -1473,7 +1507,7 @@
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#F91D7C',
-                        cancelButtonColor: '#6B7280',
+                        cancelButtonColor: '#000000',
                         confirmButtonText: 'Yes, delete it!'
                     }).then((result) => {
                         if (result.isConfirmed) {
@@ -1491,7 +1525,7 @@
         });
     </script>
 
-
+    {{-- delete service --}}
     <script>
         // SweetAlert confirmation for service deletion
         function confirmDeleteWithSweetAlert(buttonElement) {
@@ -1569,6 +1603,722 @@
     </script>
 
 
+    {{-- visit product --}}
+    <script>
+        // Visit Products Management JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("Visit products script loaded");
+
+            // Modal Elements
+            const addProductModal = document.getElementById('addProductModal');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const productForm = document.getElementById('productForm');
+            const addProductBtn = document.getElementById('addProductBtn');
+
+            // Open Modal Function
+            function openModal() {
+                // Get the visit ID from the page
+                const visitId = getVisitIdFromPage();
+                console.log("Opening modal with visit ID:", visitId);
+
+                // Set the visit ID in the form
+                if (document.getElementById('visit_ID')) {
+                    document.getElementById('visit_ID').value = visitId;
+                }
+
+                // Populate products dropdown from pre-loaded data
+                populateProductsDropdown();
+
+                // Show the modal
+                addProductModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent body scrolling
+            }
+
+            // Helper function to get the visit ID from the current page
+            function getVisitIdFromPage() {
+                // Try to get it from a data attribute on specific containers
+                const medicalContent = document.getElementById('medical-content');
+                if (medicalContent && medicalContent.dataset.visitId) {
+                    console.log("Found visit ID from medical-content:", medicalContent.dataset.visitId);
+                    return medicalContent.dataset.visitId;
+                }
+
+                const visitContent = document.getElementById('visit-content');
+                if (visitContent && visitContent.dataset.visitId) {
+                    console.log("Found visit ID from visit-content:", visitContent.dataset.visitId);
+                    return visitContent.dataset.visitId;
+                }
+
+                // Try to get it from any element with data-visit-id
+                const visitIdElement = document.querySelector('[data-visit-id]');
+                if (visitIdElement && visitIdElement.dataset.visitId) {
+                    console.log("Found visit ID from generic element:", visitIdElement.dataset.visitId);
+                    return visitIdElement.dataset.visitId;
+                }
+
+                // Alternatively, extract from URL if following a pattern like /visits/{id}
+                const urlParts = window.location.pathname.split('/');
+                const visitIdIndex = urlParts.indexOf('visits') + 1;
+                if (visitIdIndex > 0 && visitIdIndex < urlParts.length) {
+                    console.log("Extracted visit ID from URL:", urlParts[visitIdIndex]);
+                    return urlParts[visitIdIndex];
+                }
+
+                console.warn("Could not find visit ID");
+                return '';
+            }
+
+            // Close Modal Function
+            function closeModal() {
+                addProductModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Restore body scrolling
+
+                // Reset form
+                if (productForm) {
+                    productForm.reset();
+
+                    // Reset form title and button text if editing
+                    const modalHeader = document.querySelector('#addProductModal h3');
+                    if (modalHeader) {
+                        modalHeader.innerHTML = '<span class="text-[#F91D7C]">Add</span> Product';
+                    }
+
+                    const submitButton = productForm.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.textContent = 'Add';
+                    }
+                }
+            }
+
+            // Function to populate products dropdown from pre-loaded data
+            function populateProductsDropdown() {
+                // Get the select element
+                const productSelect = document.getElementById('product_ID');
+                if (!productSelect) {
+                    console.error("Product select element not found");
+                    return;
+                }
+
+                // Clear existing options except the first one
+                const firstOption = productSelect.querySelector('option[value=""]');
+                productSelect.innerHTML = '';
+                if (firstOption) {
+                    productSelect.appendChild(firstOption);
+                } else {
+                    productSelect.innerHTML = '<option value="" disabled selected>Select Product</option>';
+                }
+
+                try {
+                    // Get products data from data attribute
+                    const productsDataElement = document.getElementById('products-data');
+                    if (!productsDataElement) {
+                        console.warn('Products data element not found');
+                        return;
+                    }
+
+                    const productsData = JSON.parse(productsDataElement.dataset.products || '[]');
+                    console.log("Products data loaded:", productsData.length, "products");
+
+                    if (!Array.isArray(productsData) || productsData.length === 0) {
+                        console.warn('No products data available');
+                        return;
+                    }
+
+                    // Add products to dropdown
+                    productsData.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.product_ID;
+
+                        // Format price to 2 decimal places
+                        const formattedPrice = parseFloat(product.price).toFixed(2);
+
+                        // Create option text with product name and price
+                        option.textContent = `${product.name} - ₱${formattedPrice}`;
+
+                        // Add option to select element
+                        productSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                    productSelect.innerHTML = '<option value="" disabled selected>Error loading products</option>';
+
+                    // Show error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to load products. Please try again.',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Failed to load products. Please try again.');
+                    }
+                }
+            }
+
+            // Event Listeners for opening modal
+            if (addProductBtn) {
+                console.log("Found addProductBtn, adding click listener");
+                addProductBtn.addEventListener('click', openModal);
+            } else {
+                console.warn("addProductBtn not found");
+            }
+
+            // Make the openModal function available globally to be called from other places
+            window.openAddProductModal = function (visitId, isEdit = false) {
+                console.log("Global openAddProductModal called with visitId:", visitId, "isEdit:", isEdit);
+
+                if (visitId) {
+                    const visitIdInput = document.getElementById('visit_ID');
+                    if (visitIdInput) {
+                        visitIdInput.value = visitId;
+                        console.log("Set visit_ID input value to:", visitId);
+                    }
+                }
+
+                if (!isEdit) {
+                    // Reset the form for adding a new product
+                    if (productForm) {
+                        productForm.reset();
+
+                        // Reset the form title
+                        const modalHeader = document.querySelector('#addProductModal h3');
+                        if (modalHeader) {
+                            modalHeader.innerHTML = '<span class="text-[#F91D7C]">Add</span> Product';
+                        }
+
+                        // Reset the submit button
+                        const submitButton = productForm.querySelector('button[type="submit"]');
+                        if (submitButton) {
+                            submitButton.textContent = 'Add';
+                        }
+                    }
+                }
+
+                // Populate products dropdown
+                populateProductsDropdown();
+
+                // Show the modal
+                if (addProductModal) {
+                    addProductModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            };
+
+            // Event Listeners for closing modal
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeModal);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeModal);
+            }
+
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', closeModal);
+            }
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !addProductModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // Form Validation Function
+            function validateForm() {
+                const productId = document.getElementById('product_ID').value;
+
+                if (!productId) {
+                    // Show validation error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            text: 'Please select a product',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Please select a product');
+                    }
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Form submission handler
+            if (productForm) {
+                productForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Validate form
+                    if (!validateForm()) {
+                        return;
+                    }
+
+                    // Get form data
+                    const formData = new FormData(productForm);
+
+                    // Convert FormData to JSON object
+                    const visitProductData = {};
+                    formData.forEach((value, key) => {
+                        visitProductData[key] = value;
+                    });
+
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Show loading state
+                    const submitBtn = productForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.textContent;
+                    // submitBtn.textContent = 'Adding...';
+                    submitBtn.disabled = true;
+
+                    // Debug - log data before sending
+                    console.log("Form data before sending:", visitProductData);
+
+                    // Determine if this is an edit or add operation
+                    const isEdit = productForm.dataset.productId ? true : false;
+                    const url = isEdit
+                        ? `/visit-products/${productForm.dataset.productId}`
+                        : '/visit-products';
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    // Send AJAX request
+                    fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(visitProductData)
+                    })
+                        .then(response => {
+                            console.log("Response status:", response.status);
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    console.error("Error response:", data);
+                                    throw new Error(data.message || 'Server error occurred');
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Success response:", data);
+                            if (data.success) {
+                                // Show success message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: isEdit ? 'Product updated successfully!' : 'Product added successfully!',
+                                        confirmButtonColor: '#F91D7C'
+                                    }).then(() => {
+                                        // Reload the page to refresh the products list
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    alert(isEdit ? 'Product updated successfully!' : 'Product added successfully!');
+                                    // Reload the page to refresh the products list
+                                    window.location.reload();
+                                }
+
+                                // Close modal
+                                closeModal();
+                            } else {
+                                // Show error message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: data.message || (isEdit ? 'Failed to update product' : 'Failed to add product'),
+                                        confirmButtonColor: '#F91D7C'
+                                    });
+                                } else {
+                                    alert(data.message || (isEdit ? 'Failed to update product' : 'Failed to add product'));
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            // Show error message
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: error.message || 'An error occurred while processing your request',
+                                    confirmButtonColor: '#F91D7C'
+                                });
+                            } else {
+                                alert(error.message || 'An error occurred while processing your request');
+                            }
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            submitBtn.textContent = originalBtnText;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+
+            // Initialize edit product functionality
+            initializeEditProductButtons();
+
+
+
+            /**
+             * Initialize edit buttons for products
+             */
+            function initializeEditProductButtons() {
+                const editButtons = document.querySelectorAll('.edit-product-btn');
+                console.log("Found edit buttons:", editButtons.length);
+
+                editButtons.forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const productId = this.dataset.id;
+                        console.log("Edit button clicked for product ID:", productId);
+
+                        // Fetch product details for editing
+                        fetch(`/visit-products/${productId}/edit`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    console.log("Product data received:", data.data);
+                                    populateEditForm(data.data);
+                                } else {
+                                    showError(data.message || 'Failed to load product details');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                showError('An error occurred while retrieving product details');
+                            });
+                    });
+                });
+            }
+
+
+            /**
+             * Populate the edit form with product data
+             */
+            // function populateEditForm(visitProduct) {
+            console.log("Populating edit form with product data:", visitProduct);
+
+            // Check if form exists
+            if (!productForm) {
+                console.error("Product form not found");
+                return;
+            }
+
+            // Set form values
+            document.getElementById('visit_ID').value = visitProduct.visit_ID;
+            console.log("Set visit_ID to:", visitProduct.visit_ID);
+
+            // Store the product ID for update
+            productForm.dataset.productId = visitProduct.visit_products_ID;
+            console.log("Set form product ID to:", visitProduct.visit_products_ID);
+
+            // Update the form title to indicate editing
+            const modalHeader = document.querySelector('#addProductModal h3');
+            if (modalHeader) {
+                modalHeader.innerHTML = '<span class="text-[#F91D7C]">Edit</span> Product';
+            }
+
+            // Populate products dropdown first
+            populateProductsDropdown();
+
+            // Set product selection after dropdown is populated
+            setTimeout(() => {
+                const productSelect = document.getElementById('product_ID');
+                if (productSelect && visitProduct.product_ID) {
+                    const options = Array.from(productSelect.options);
+                    const foundOption = options.find(option => option.value == visitProduct.product_ID);
+                    if (foundOption) {
+                        foundOption.selected = true;
+                        console.log("Selected existing option:", foundOption.textContent);
+                    } else {
+                        // If product option doesn't exist in dropdown, create a temporary option
+                        const newOption = document.createElement('option');
+                        newOption.value = visitProduct.product_ID;
+                        newOption.textContent = visitProduct.product.name + ' - ₱' + parseFloat(visitProduct.product.price).toFixed(2);
+                        newOption.selected = true;
+                        productSelect.appendChild(newOption);
+                        console.log("Created and selected new option:", newOption.textContent);
+                    }
+                }
+
+                // Set quantity if it exists
+                // const quantityInput = document.getElementById('quantity');
+                // if (quantityInput) {
+                //     quantityInput.value = visitProduct.quantity || 1;
+                //     console.log("Set quantity to:", quantityInput.value);
+                // }
+
+                // Set note
+                const noteInput = document.getElementById('note');
+                if (noteInput) {
+                    noteInput.value = visitProduct.note || '';
+                    console.log("Set note to:", noteInput.value);
+                }
+
+                // Change submit button text
+                const submitButton = productForm.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.textContent = 'Update';
+                }
+            }, 100);
+
+            // Show the modal
+            addProductModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+/**
+ * Populate the edit form with product data - Fixed Note Retrieval
+ */
+function populateEditForm(visitProduct) {
+                console.log("Populating edit form with product data:", visitProduct);
+
+                // Check if form exists
+                if (!productForm) {
+                    console.error("Product form not found");
+                    return;
+                }
+
+                // Set form values
+                document.getElementById('visit_ID').value = visitProduct.visit_ID;
+                console.log("Set visit_ID to:", visitProduct.visit_ID);
+
+                // Store the product ID for update
+                productForm.dataset.productId = visitProduct.visit_products_ID;
+                console.log("Set form product ID to:", visitProduct.visit_products_ID);
+
+                // Update the form title to indicate editing
+                const modalHeader = document.querySelector('#addProductModal h3');
+                if (modalHeader) {
+                    modalHeader.innerHTML = '<span class="text-[#F91D7C]">Edit</span> Product';
+                }
+
+                // Populate products dropdown first
+                populateProductsDropdown();
+
+                // Set product selection after dropdown is populated
+                setTimeout(() => {
+                    const productSelect = document.getElementById('product_ID');
+                    if (productSelect && visitProduct.product_ID) {
+                        const options = Array.from(productSelect.options);
+                        const foundOption = options.find(option => option.value == visitProduct.product_ID);
+                        if (foundOption) {
+                            foundOption.selected = true;
+                            console.log("Selected existing option:", foundOption.textContent);
+                        } else {
+                            // If product option doesn't exist in dropdown, create a temporary option
+                            const newOption = document.createElement('option');
+                            newOption.value = visitProduct.product_ID;
+                            newOption.textContent = visitProduct.product.name + ' - ₱' + parseFloat(visitProduct.product.price).toFixed(2);
+                            newOption.selected = true;
+                            productSelect.appendChild(newOption);
+                            console.log("Created and selected new option:", newOption.textContent);
+                        }
+                    }
+
+                    // Set quantity if it exists
+                    const quantityInput = document.getElementById('quantity');
+                    if (quantityInput) {
+                        quantityInput.value = visitProduct.quantity || 1;
+                        console.log("Set quantity to:", quantityInput.value);
+                    }
+
+                    // *** NEW CODE: Use the exact same approach as view product modal ***
+                    // Set note - use same technique as view product modal
+                    const noteInput = document.getElementById('note');
+                    if (noteInput) {
+                        // Extract note exactly the same way as view product modal
+                        const noteContent = visitProduct.note || '';
+                        noteInput.value = noteContent;
+                        console.log("Set note to:", noteContent);
+                    }
+
+                    // Change submit button text
+                    const submitButton = productForm.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.textContent = 'Update';
+                    }
+                }, 100);
+
+                // Show the modal
+                addProductModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+
+            // delete
+
+            // Find all delete product forms
+            const deleteForms = document.querySelectorAll('.delete-product-form');
+
+        // Add submit event listener to each form
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevent normal form submission
+
+                // Create FormData object from the form
+                const formData = new FormData(this);
+
+                // Send form using fetch
+                fetch(this.action, {
+                    method: 'POST', // Always POST because method spoofing is handled by Laravel
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Add this for better Laravel compatibility
+                    }
+                })
+                    .then(response => {
+                        // Log the raw response for debugging
+                        console.log("Response status:", response.status);
+                        console.log("Response headers:", [...response.headers.entries()]);
+
+                        // Check if the response can be parsed as JSON
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json().then(data => {
+                                // Even if response.ok is false, we return the parsed data
+                                // to handle it in the next .then block
+                                return {
+                                    ok: response.ok,
+                                    status: response.status,
+                                    data: data
+                                };
+                            });
+                        } else {
+                            // For non-JSON responses
+                            return response.text().then(text => {
+                                return {
+                                    ok: response.ok,
+                                    status: response.status,
+                                    text: text
+                                };
+                            });
+                        }
+                    })
+                    .then(result => {
+                        // Log the processed result for debugging
+                        console.log("Processed result:", result);
+
+                        // Handle success even if the response doesn't have a success property
+                        // Some Laravel responses may just return a 200 OK without a specific success flag
+                        if (result.ok || (result.data && result.data.success)) {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Product deleted successfully!',
+                                    confirmButtonColor: '#F91D7C'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                alert('Product deleted successfully!');
+                                window.location.reload();
+                            }
+                        } else {
+                            // Handle error responses
+                            const errorMessage = result.data && result.data.message
+                                ? result.data.message
+                                : 'Failed to delete product';
+
+                            console.error('Error response:', result);
+                            showError(errorMessage);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Network or parsing error:', error);
+                        showError('An error occurred while deleting the product');
+                    });
+            });
+        });
+
+        // Make sure the showError function exists
+        function showError(message) {
+            console.error("Error message:", message);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: message,
+                    confirmButtonColor: '#F91D7C'
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        // Add click event listener to each button to trigger form submission
+        document.querySelectorAll('.delete-product-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#F91D7C',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
+                        }
+                    });
+                } else {
+                    if (confirm('Are you sure you want to delete this product?')) {
+                        this.closest('.delete-product-form').dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+        });
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            console.error("Error:", message);
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: message,
+                    confirmButtonColor: '#F91D7C'
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
 
     @include('patients record/modal/add modal/add_services')
     @include('patients record/modal/add modal/add_product')
@@ -1576,7 +2326,7 @@
 
 
     @include('patients record/modal/edit modal/edit_service')
-    @include('patients record/modal/edit modal/edit_product')
+    {{-- @include('patients record/modal/edit modal/edit_product') --}}
     @include('patients record/modal/edit modal/edit_prescription')
 
 

@@ -1,17 +1,17 @@
-<!-- Button to open modal -->
-<!-- <button id="addProductBtn" class="bg-[#F91D7C] text-white px-6 py-2 rounded hover:bg-[#F91D7C]/90">
-  Add Product
-</button> -->
+{{-- Button to open modal --}}
+{{-- <button id="addProductBtn" class="bg-[#F91D7C] text-white px-6 py-2 rounded hover:bg-[#F91D7C]/90">
+    Add Product
+</button> --}}
 
-{{-- Add Product Modal --}}
+<!-- {{-- Add Product Modal --}}
 <div id="addProductModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
-        <!-- Modal Background Overlay -->
+        {{-- Modal Background Overlay --}}
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="modalOverlay"></div>
         
-        <!-- Modal Content -->
+        {{-- Modal Content --}}
         <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto z-10">
-            <!-- Modal Header -->
+            {{-- Modal Header --}}
             <div class="flex items-center justify-between p-6 pb-0">
                 <h3 class="text-2xl font-bold">
                     <span class="text-[#F91D7C]">Add</span> Product
@@ -24,7 +24,7 @@
                 </button>
             </div>
             
-            <!-- Modal Body -->
+            {{-- Modal Body --}}
             <div class="p-6">
                 <form id="productForm">
                     <div class="mb-4">
@@ -33,7 +33,7 @@
                         </p>
                     </div>
                     
-                    <!-- Product Selection Field -->
+                    {{-- Product Selection Field --}}
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Product<span class="text-[#F91D7C]">*</span>
@@ -47,7 +47,7 @@
                         </select>
                     </div>
                     
-                    <!-- Quantity Field -->
+                    {{-- Quantity Field --}}
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Quantity<span class="text-[#F91D7C]">*</span>
@@ -67,16 +67,16 @@
                         </div>
                     </div>
                     
-                    <!-- Discount Field -->
-                    <!-- <div class="mb-4">
+                    {{-- Discount Field --}}
+                    {{-- <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Discount (%)
                         </label>
                         <input type="number" id="productDiscount" name="productDiscount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" placeholder="0" min="0" max="100" value="0">
-                    </div> -->
+                    </div> --}}
                     
-                    <!-- Payment Status Field -->
-                    <!-- <div class="mb-4">
+                    {{-- Payment Status Field --}}
+                    {{-- <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Payment Status
                         </label>
@@ -90,9 +90,9 @@
                                 <span class="ml-2 text-sm text-gray-700">Unpaid</span>
                             </label>
                         </div>
-                    </div> -->
+                    </div> --}}
                     
-                    <!-- Notes Field -->
+                    {{-- Notes Field --}}
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Notes
@@ -100,7 +100,7 @@
                         <textarea id="productNotes" name="productNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" placeholder="Add any notes about this product"></textarea>
                     </div>
                     
-                    <!-- Button Actions -->
+                    {{-- Button Actions --}}
                     <div class="grid grid-cols-2 gap-4">
                         <button type="submit" class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
                             Add
@@ -235,4 +235,95 @@
             });
         }
     });
-</script>
+</script> -->
+
+
+
+
+
+
+
+
+
+{{-- Add Product Modal --}}
+<div id="addProductModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Modal Background Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="modalOverlay"></div>
+
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto z-10">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 pb-0">
+                <h3 class="text-2xl font-bold">
+                    <span class="text-[#F91D7C]">Add</span> Product
+                </h3>
+
+                <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="productForm">
+                    <div class="mb-4">
+                        <p class="text-sm mb-2">
+                            All fields with <span class="text-red-500">*</span> are required.
+                        </p>
+                    </div>
+
+                    <!-- Hidden Visit ID Field -->
+                    <input type="hidden" id="visit_ID" name="visit_ID"
+                        value="{{ $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id') ?? '' }}">
+                        
+                    <!-- Hidden Quantity Field (default to 1) -->
+                    <input type="hidden" id="quantity" name="quantity" value="1">
+
+                    <!-- Product Selection Field -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Product<span class="text-[#F91D7C]">*</span>
+                        </label>
+                        <select id="product_ID" name="product_ID"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                            required>
+                            <option value="" disabled selected>Select Product</option>
+                            @foreach($allProducts ?? [] as $product)
+                                <option value="{{ $product->product_ID }}">{{ $product->name }} -
+                                    ₱{{ number_format($product->price, 2) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Notes Field -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Notes
+                        </label>
+                        <textarea id="note" name="note" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                            placeholder="Add any notes about this product"></textarea>
+                    </div>
+
+                    <!-- Button Actions -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="submit"
+                            class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
+                            Add
+                        </button>
+                        <button type="button" id="cancelBtn"
+                            class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
