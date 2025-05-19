@@ -5,13 +5,70 @@ namespace App\Http\Controllers\Patients;
 use App\Http\Controllers\Controller;
 use App\Models\Patients\VisitProduct;
 use App\Models\Patients\VisitHistory;
-use App\Models\Patients\Product;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class VisitProductController extends Controller
 {
+ 
+
+     /**
+     * Display a listing of products for a visit.
+     */
+    public function index(Request $request, $visitId = null)
+    {
+        // Log that the method has been called
+        \Log::info("VisitProductController index method called with visit ID: " . $visitId);
+
+        // If visitId is null, try to get it from the request
+        if ($visitId === null) {
+            $visitId = $request->input('visit_id');
+        }
+
+        \Log::info("Final visit ID being used: " . $visitId);
+
+        // Get the Visit model
+        $visit = null;
+        if ($visitId) {
+            $visit = VisitHistory::with(['products.product'])->find($visitId);
+            \Log::info("Visit found: " . ($visit ? 'Yes' : 'No'));
+        }
+
+        // Extract products from the visit
+        $visitProducts = $visit ? $visit->products : collect();
+        \Log::info("Visit products count: " . $visitProducts->count());
+
+        // Get all products for the dropdown
+        // FIXED: removed 'description' column
+        $allProducts = Product::orderBy('name', 'asc')
+            ->get(['product_ID', 'name', 'price']);
+
+        // Apply search filters if needed
+        $search = $request->input('search');
+        $timeFilter = $request->input('time_filter', 'all_time');
+
+        // For AJAX requests, return JSON
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => $visitProducts,
+                'visit' => $visit
+            ]);
+        }
+
+        // Return the view with all necessary variables
+        return view('visits.products.index', compact(
+            'visitProducts',
+            'visit',
+            'search',
+            'timeFilter',
+            'visitId',
+            'allProducts'
+        ));
+    }
+    
     /**
      * Store a newly created visit product in storage.
      *
@@ -31,6 +88,7 @@ class VisitProductController extends Controller
                 'visit_ID' => 'required|exists:visit_history,visit_ID',
                 'product_ID' => 'required|exists:products,product_ID',
                 'note' => 'nullable|string',
+                'quantity' => 'nullable|integer|min:1',
             ]);
 
             Log::info('Validation passed', ['validated' => $validated]);
@@ -119,6 +177,29 @@ class VisitProductController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($id)
+    {
+        try {
+            // Find the visit product with its relationships
+            $visitProduct = VisitProduct::with('product')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $visitProduct
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get visit product for editing: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load product details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Update the specified visit product in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -130,8 +211,9 @@ class VisitProductController extends Controller
         try {
             // Validate request
             $validated = $request->validate([
-                'product_ID' => 'sometimes|required|exists:products,product_ID',
+                'product_ID' => 'required|exists:products,product_ID',
                 'note' => 'nullable|string',
+                'quantity' => 'nullable|integer|min:1',
             ]);
 
             // Begin transaction

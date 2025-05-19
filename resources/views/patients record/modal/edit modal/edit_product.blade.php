@@ -1,25 +1,27 @@
-<!-- Edit Product Modal -->
+{{-- Edit Product Modal --}}
 <div id="editProductModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
-        <!-- Modal Background Overlay -->
+        {{-- Modal Background Overlay --}}
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="editModalOverlay"></div>
-        
-        <!-- Modal Content -->
+
+        {{-- Modal Content --}}
         <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto z-10">
-            <!-- Modal Header -->
+            {{-- Modal Header --}}
             <div class="flex items-center justify-between p-6 pb-0">
                 <h3 class="text-2xl font-bold">
                     <span class="text-[#F91D7C]">Edit</span> Product
                 </h3>
-                
+
                 <button type="button" class="text-gray-400 hover:text-gray-500" id="closeEditModalBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            
-            <!-- Modal Body -->
+
+            {{-- Modal Body --}}
             <div class="p-6">
                 <form id="editProductForm">
                     <div class="mb-4">
@@ -27,54 +29,41 @@
                             All fields with <span class="text-red-500">*</span> are required.
                         </p>
                     </div>
-                    
-                    <!-- Product Selection Field -->
+
+                    {{-- Product Selection Field --}}
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Product<span class="text-red-500">*</span>
                         </label>
-                        <select id="editSelectedProduct" name="selectedProduct" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" required>
-                            <option value="" disabled>Select Product</option>
-                            <option value="1">CeraVe Foaming Cleanser Normal to Oily Skin - ₱900.00</option>
-                            <option value="2">Paula's Choice C5 Super Boost Moisturizer 15ml / 50ml - ₱700.00</option>
-                            <option value="3">Collagen Tone-Up Booster Cream - ₱690.99</option>
+                        <select id="editSelectedProduct" name="selectedProduct"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                            required>
+                            <option value="" disabled selected>Select Product</option>
+                            @foreach($allProducts ?? [] as $product)
+                                <option value="{{ $product->product_ID }}">{{ $product->name }} -
+                                    ₱{{ number_format($product->price, 2) }}</option>
+                            @endforeach
                         </select>
                     </div>
-                    
-                    <!-- Quantity Field -->
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Quantity<span class="text-red-500">*</span>
-                        </label>
-                        <div class="flex items-center">
-                            <button type="button" id="decreaseQuantityBtn" class="px-3 py-2 border border-gray-300 rounded-l-md hover:bg-gray-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                                </svg>
-                            </button>
-                            <input type="number" id="editProductQuantity" name="productQuantity" class="w-full text-center px-3 py-2 border-t border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" value="1" min="1" required>
-                            <button type="button" id="increaseQuantityBtn" class="px-3 py-2 border border-gray-300 rounded-r-md hover:bg-gray-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Notes Field -->
+
+                    {{-- Notes Field --}}
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Notes
                         </label>
-                        <textarea id="editProductNotes" name="productNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" placeholder="Add any notes about this product">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s</textarea>
+                        <textarea id="editProductNotes" name="productNotes" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                            placeholder="Add any notes about this product">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s</textarea>
                     </div>
-                    
-                    <!-- Button Actions -->
+
+                    {{-- Button Actions --}}
                     <div class="grid grid-cols-2 gap-4">
-                        <button type="submit" class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
-                        Update
+                        <button type="submit"
+                            class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
+                            Update
                         </button>
-                        <button type="button" id="cancelEditBtn" class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
+                        <button type="button" id="cancelEditBtn"
+                            class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
                             Cancel
                         </button>
                     </div>
@@ -84,7 +73,7 @@
     </div>
 </div>
 
-<script>
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Modal Elements
         const editProductModal = document.getElementById('editProductModal');
@@ -291,4 +280,4 @@
             openModal(productId, quantity, notes);
         };
     });
-</script>
+</script> -->
