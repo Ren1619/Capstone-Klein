@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Patients;
 use App\Http\Controllers\Controller;
 use App\Models\Patients\VisitService;
 use App\Models\Patients\VisitHistory;
-use App\Models\Patients\Service;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,63 +13,61 @@ use Illuminate\Support\Facades\Log;
 class VisitServiceController extends Controller
 {
     /**
-     * Display a paginated listing of visit services.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse|\Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+     * Display a listing of services for a visit.
      */
-    public function index(Request $request)
+    public function index(Request $request, $visitId = null)
     {
-        try {
-            // Get query parameters
-            $perPage = $request->input('per_page', 15); // Default 15 items per page
-            $sortBy = $request->input('sort_by', 'created_at'); // Default sort by created_at
-            $sortDirection = $request->input('sort_direction', 'desc'); // Default sort direction descending
-            $visitId = $request->input('visit_id'); // Optional filter by visit ID
-            $serviceId = $request->input('service_id'); // Optional filter by service ID
-            
-            // Start query
-            $query = VisitService::with(['service']); // Eager load service relationship
-            
-            // Apply filters if provided
-            if ($visitId) {
-                $query->where('visit_ID', $visitId);
-            }
-            
-            if ($serviceId) {
-                $query->where('service_ID', $serviceId);
-            }
-            
-            // Apply sorting
-            $query->orderBy($sortBy, $sortDirection);
-            
-            // Get paginated results
-            $visitServices = $query->paginate($perPage);
-            
-            // Handle JSON response for AJAX requests
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $visitServices
-                ]);
-            }
-            
-            // For regular HTTP requests, return a view
-            return view('patients.visit-services.index', compact('visitServices'));
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to retrieve visit services: ' . $e->getMessage());
-            
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to retrieve visit services: ' . $e->getMessage()
-                ], 500);
-            }
-            
-            return back()->with('error', 'Failed to retrieve visit services: ' . $e->getMessage());
+        // Log that the method has been called
+        \Log::info("VisitServiceController index method called with visit ID: " . $visitId);
+
+        // If visitId is null, try to get it from the request
+        if ($visitId === null) {
+            $visitId = $request->input('visit_id');
         }
+
+        \Log::info("Final visit ID being used: " . $visitId);
+
+        // Get the Visit model
+        $visit = null;
+        if ($visitId) {
+            $visit = VisitHistory::with(['services.service'])->find($visitId);
+            \Log::info("Visit found: " . ($visit ? 'Yes' : 'No'));
+        }
+
+        // Extract services from the visit
+        $visitServices = $visit ? $visit->services : collect();
+        \Log::info("Visit services count: " . $visitServices->count());
+
+        // Get all services for the dropdown
+        $allServices = Service::orderBy('name', 'asc')
+            ->get(['service_ID', 'name', 'price', 'description']);
+
+        // Apply search filters if needed
+        $search = $request->input('search');
+        $timeFilter = $request->input('time_filter', 'all_time');
+
+        // For AJAX requests, return JSON
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => $visitServices,
+                'visit' => $visit
+            ]);
+        }
+
+        // Return the view with all necessary variables
+        return view('visits.services.index', compact(
+            'visitServices',
+            'visit',
+            'search',
+            'timeFilter',
+            'visitId',
+            'allServices'
+        ));
     }
+
+
+
 
     /**
      * Store a newly created visit service in storage.
@@ -140,94 +138,114 @@ class VisitServiceController extends Controller
         }
     }
 
+
+
+
     /**
-     * Display the specified visit service.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function show(Request $request, $id)
+
+    public function show($id)
     {
         try {
-            $visitService = VisitService::with('service')->findOrFail($id);
+            // Get the visit with eager loaded services relationship
+            $visit = VisitHistory::with(['services.service', 'prescriptions'])
+                ->findOrFail($id);
 
-            // Handle JSON response for AJAX requests
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $visitService
-                ]);
-            }
+            \Log::info("Showing visit ID: " . $id);
+            \Log::info("Visit services count: " . $visit->services->count());
 
-            // For regular requests, redirect to the visit page
-            return redirect()->route('visits.show', $visitService->visit_ID);
+            // Extract services to a separate variable
+            $visitServices = $visit->services;
+
+            // Get all services for the dropdown
+            $allServices = Service::orderBy('name', 'asc')
+                ->get(['service_ID', 'name', 'price', 'description']);
+
+            // Return the view with all necessary variables
+            return view('visits.show', compact('visit', 'visitServices', 'allServices'));
 
         } catch (\Exception $e) {
-            Log::error('Failed to retrieve visit service: ' . $e->getMessage());
+            \Log::error('Failed to retrieve visit: ' . $e->getMessage());
+            return back()->with('error', 'Failed to retrieve visit: ' . $e->getMessage());
+        }
+    }
 
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to retrieve service: ' . $e->getMessage()
-                ], 404);
-            }
 
-            return back()->with('error', 'Failed to retrieve service: ' . $e->getMessage());
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($id)
+    {
+        try {
+            // Find the visit service with its relationships
+            $visitService = VisitService::with('service')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $visitService
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to get visit service for editing: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load service details: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Update the specified visit service in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
     {
         try {
-            // Validate request
-            $validated = $request->validate([
-                'service_ID' => 'sometimes|required|exists:services,service_ID',
-                'note' => 'nullable|string',
+            \Log::info('Visit service update request received', [
+                'id' => $id,
+                'data' => $request->all()
             ]);
 
-            // Begin transaction
-            DB::beginTransaction();
+            // Validate request
+            $validated = $request->validate([
+                'service_ID' => 'required|exists:services,service_ID',
+                'note' => 'nullable|string|max:255'
+            ]);
 
-            // Find visit service
+            // Find the visit service
             $visitService = VisitService::findOrFail($id);
 
-            // Update visit service
-            $visitService->update($validated);
+            // Verify the visit ID if provided (optional security check)
+            if ($request->has('visit_ID') && !empty($request->visit_ID)) {
+                if ($visitService->visit_ID != $request->visit_ID) {
+                    throw new \Exception('Unauthorized access to this visit service.');
+                }
+            }
 
-            // Commit transaction
-            DB::commit();
+            // Update the visit service
+            $visitService->service_ID = $validated['service_ID'];
+            $visitService->note = $validated['note'] ?? null;
+            $visitService->save();
 
-            // Get the visit for response
-            $visit = VisitHistory::with(['services.service'])->findOrFail($visitService->visit_ID);
+            \Log::info('Visit service updated successfully', [
+                'id' => $visitService->visit_services_ID
+            ]);
 
-            // Handle JSON response for AJAX requests
+            // Handle AJAX response
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Service updated successfully',
-                    'data' => $visitService,
-                    'services' => $visit->services // Return updated services list
+                    'data' => $visitService
                 ]);
             }
 
-            // Redirect to the visit page
-            return redirect()->route('visits.show', $visitService->visit_ID)
-                ->with('success', 'Service updated successfully.');
-
+            // Handle regular form response
+            return redirect()->back()->with('success', 'Service updated successfully');
         } catch (\Exception $e) {
-            // Rollback transaction
-            DB::rollBack();
-            Log::error('Failed to update visit service: ' . $e->getMessage());
+            \Log::error('Failed to update service: ' . $e->getMessage());
 
-            // Handle JSON response for AJAX requests
+            // Handle AJAX response
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -235,59 +253,51 @@ class VisitServiceController extends Controller
                 ], 500);
             }
 
-            // Return redirect response for regular form submissions
-            return back()->withInput()
-                ->with('error', 'Failed to update service: ' . $e->getMessage());
+            // Handle regular form response
+            return back()->with('error', 'Failed to update service: ' . $e->getMessage());
         }
     }
 
     /**
-     * Remove the specified visit service from storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * Remove the specified resource from storage.
      */
     public function destroy(Request $request, $id)
     {
         try {
-            // Find visit service
-            $visitService = VisitService::findOrFail($id);
-            $visitId = $visitService->visit_ID;
+            // Get the visit ID from the request
+            $visitId = $request->input('visit_ID');
 
-            // Delete visit service
+            // Find the visit service
+            $visitService = VisitService::findOrFail($id);
+
+            // Verify the visit ID matches (for security)
+            if ($visitService->visit_ID != $visitId) {
+                throw new \Exception('Unauthorized access to this visit service.');
+            }
+
+            // Delete the visit service
             $visitService->delete();
 
-            // Get the visit for response
-            $visit = VisitHistory::with(['services.service'])->findOrFail($visitId);
-
-            // Handle JSON response for AJAX requests
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Service removed successfully',
-                    'services' => $visit->services // Return updated services list
+                    'message' => 'Service deleted successfully'
                 ]);
             }
 
-            // Redirect to the visit page
             return redirect()->route('visits.show', $visitId)
-                ->with('success', 'Service removed successfully.');
-
+                ->with('success', 'Service deleted successfully');
         } catch (\Exception $e) {
-            Log::error('Failed to remove visit service: ' . $e->getMessage());
+            \Log::error('Failed to delete service: ' . $e->getMessage());
 
-            // Handle JSON response for AJAX requests
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to remove service: ' . $e->getMessage()
+                    'message' => 'Failed to delete service: ' . $e->getMessage()
                 ], 500);
             }
 
-            // Return redirect response for regular form submissions
-            return back()
-                ->with('error', 'Failed to remove service: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete service: ' . $e->getMessage());
         }
     }
 }

@@ -88,7 +88,7 @@ class Patient extends Model
      */
     public function getAgeAttribute()
     {
-        return \Carbon\Carbon::parse($this->date_of_birth)->age;
+        return Carbon::parse($this->date_of_birth)->age;
     }
 
     /**
@@ -128,11 +128,11 @@ class Patient extends Model
         return $pid;
     }
 
-    /**
-     * Generate a patient ID based on the current month and year.
-     */
-    public static function generatePatientId()
-    {
-        return IdGenerator::generatePatientId();
-    }
+    // /**
+    //  * Generate a patient ID based on the current month and year.
+    //  */
+    // public static function generatePatientId()
+    // {
+    //     return IdGenerator::generatePatientId();
+    // }
 }
