@@ -1,11 +1,9 @@
-
-
 <div id="patient-tabs">
     {{-- Tabs Navigation --}}
-    <!-- Responsive Tabs with Carousel for Small Devices -->
+    {{-- Responsive Tabs with Carousel for Small Devices --}}
     <div class="border-b border-gray-200">
         <div class="relative">
-            <!-- Tabs Container with Horizontal Scroll -->
+            {{-- Tabs Container with Horizontal Scroll --}}
             <div class="flex px-2 overflow-x-auto scrollbar-hide" id="tabs-carousel">
                 <div class="relative px-3 sm:px-4 py-2 mr-1 sm:mr-2 cursor-pointer tab-btn active flex-shrink-0"
                     data-tab="visit">
@@ -29,7 +27,7 @@
                 </div>
             </div>
 
-            <!-- Left Arrow (hidden by default, shown when scrollable) -->
+            {{-- Left Arrow (hidden by default, shown when scrollable) --}}
             <button id="scroll-left"
                 class="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full p-1 hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24"
@@ -38,7 +36,7 @@
                 </svg>
             </button>
 
-            <!-- Right Arrow (hidden by default, shown when scrollable) -->
+            {{-- Right Arrow (hidden by default, shown when scrollable) --}}
             <button id="scroll-right"
                 class="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full p-1 hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24"
@@ -58,7 +56,7 @@
 
 
         {{-- Visit Services Content --}}
-        <div id="visit-content" class="tab-content">
+        {{-- <div id="visit-content" class="tab-content">
             <div class="flex justify-end mb-4">
                 <button id="availServiceBtn" class="text-[#F91D7C] z-10 flex items-center gap-2"
                     onclick="openAddServiceModal()">
@@ -67,12 +65,12 @@
             </div>
 
 
-              @php
-                // Get services dynamically from the visit model
-                $visitServices = $visit->services ?? [];
+            @php
+            // Get services dynamically from the visit model
+            $visitServices = $visit->services ?? [];
             @endphp
 
-            <!-- Desktop View -->
+            Desktop View
             <div class="hidden md:block">
                 <table class="w-full min-w-full table-auto">
                     <thead>
@@ -90,33 +88,176 @@
                     </thead>
                     <tbody>
                         @forelse ($visitServices as $index => $visitService)
-                            <tr class="view-service-btn border-b border-gray-200 hover:bg-[#F91D7C]/5"
-                                data-id="{{ $visitService->visit_services_ID }}">
-                                <td class="py-3 text-black text-sm md:text-base font-normal font-poppins">
+                        <tr class="view-service-btn border-b border-gray-200 hover:bg-[#F91D7C]/5"
+                            data-id="{{ $visitService->visit_services_ID }}">
+                            <td class="py-3 text-black text-sm md:text-base font-normal font-poppins">
+                                <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
+                                <span class="font-normal">{{ $visitService->service->name ?? 'Unknown Service' }}</span>
+                                @if($visitService->note)
+                                <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                                @endif
+                            </td>
+                            <td class="py-3">
+                                <div class="flex justify-end items-center gap-3.5">
+                                    edit button
+                                    <button
+                                        class="edit-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
+                                        data-id="{{ $visitService->visit_services_ID }}"
+                                        data-service-id="{{ $visitService->service_ID }}"
+                                        data-note="{{ $visitService->note ?? '' }}"
+                                        onclick="openEditServiceModal({{ $visitService->visit_services_ID }}, {{ $visitService->service_ID }}, '{{ addslashes($visitService->note ?? '') }}')">
+                                        <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
+                                    </button>
+                                    delete button
+                                    <button
+                                        class="delete-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
+                                        data-id="{{ $visitService->visit_services_ID }}"
+                                        onclick="confirmDeleteService({{ $visitService->visit_services_ID }})">
+                                        <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="2" class="py-4 text-center text-gray-500">
+                                No services added to this visit yet.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            Mobile View
+            <div class="md:hidden">
+                @forelse ($visitServices as $index => $visitService)
+                <div class="border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-normal">
+                                <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
+                                {{ $visitService->service->name ?? 'Unknown Service' }}
+                            </p>
+                            @if($visitService->note)
+                            <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="edit-service-btn w-6 h-6" data-id="{{ $visitService->visit_services_ID }}"
+                                data-service-id="{{ $visitService->service_ID }}"
+                                data-note="{{ $visitService->note ?? '' }}"
+                                onclick="openEditServiceModal({{ $visitService->visit_services_ID }}, {{ $visitService->service_ID }}, '{{ addslashes($visitService->note ?? '') }}')">
+                                <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
+                            </button>
+                            <button class="delete-service-btn w-6 h-6" data-id="{{ $visitService->visit_services_ID }}"
+                                onclick="confirmDeleteService({{ $visitService->visit_services_ID }})">
+                                <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="py-4 text-center text-gray-500">
+                    No services added to this visit yet. Click the button above to add a service.
+                </div>
+                @endforelse
+            </div>
+        </div> --}}
+
+        {{-- Visit Services Content --}}
+        <!-- data-visit-id="{{ $visit->visit_ID ?? '' }}" -->
+
+
+        <div id="visit-content" class="tab-content"
+            data-visit-id="{{ $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id') ?? '' }}">
+
+            @php
+                // EMERGENCY FIX: Fetch data directly if not provided
+                $visitId = $visit->visit_ID ?? request()->route('visit') ?? request()->input('visit_id');
+
+                if (!isset($visit) && $visitId) {
+                    $visit = \App\Models\Patients\VisitHistory::find($visitId);
+                }
+
+                if (!isset($visitServices) && isset($visit)) {
+                    $visitServices = \App\Models\Patients\VisitService::with('service')
+                        ->where('visit_ID', $visit->visit_ID)
+                        ->get();
+                } elseif (!isset($visitServices)) {
+                    $visitServices = collect();
+                }
+
+                // Get all services for the dropdown
+                $allServices = \App\Models\Service::orderBy('name', 'asc')
+                    ->get(['service_ID', 'name', 'price', 'description']);
+            @endphp
+
+
+            {{-- Pass all services data to JavaScript through data attribute --}}
+            <div id="services-data" class="hidden" data-services="{{ json_encode($allServices ?? []) }}"></div>
+
+
+            <div class="flex justify-end mb-4">
+                <button id="availServiceBtn" class="text-[#F91D7C] z-10 flex items-center gap-2"
+                    onclick="openAddServiceModal()">
+                    <img src="{{ asset('icons/add_appointment.svg') }}" alt="Add Service">
+                </button>
+            </div>
+
+
+
+            {{-- Desktop View --}}
+            <div class="hidden md:block">
+                <table class="w-full min-w-full table-auto">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="pb-3 pt-3 text-left text-neutral-500 text-sm md:text-base font-normal font-poppins whitespace-nowrap"
+                                style="width: 85%;">
+                                <span class="inline-block mr-2 text-neutral-500">{{ '#' }}</span>
+                                Service Name
+                            </th>
+                            <th class="pb-3 pt-3 text-right text-neutral-500 text-sm md:text-base font-normal font-poppins whitespace-nowrap"
+                                style="width: 15%;">
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($visitServices as $index => $visitService)
+                            <tr class=" border-gray-200 hover:bg-[#F91D7C]/5">
+                                <td class="view-service-btn border-b py-3 text-black text-sm md:text-base font-normal font-poppins"
+                                    data-id="{{ $visitService->visit_services_ID }}">
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     <span class="font-normal">{{ $visitService->service->name ?? 'Unknown Service' }}</span>
-                                    @if($visitService->note)
-                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
-                                    @endif
+                                    <!-- @if($visitService->note)
+                                                                            <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                                                                        @endif -->
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
-                                        <!-- edit button -->
+                                        {{-- edit button --}}
                                         <button
                                             class="edit-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
-                                            data-id="{{ $visitService->visit_services_ID }}"
-                                            data-service-id="{{ $visitService->service_ID }}"
-                                            data-note="{{ $visitService->note ?? '' }}"
-                                            onclick="openEditServiceModal({{ $visitService->visit_services_ID }}, {{ $visitService->service_ID }}, '{{ addslashes($visitService->note ?? '') }}')">
+                                            data-id="{{ $visitService->visit_services_ID }}">
                                             <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                         </button>
-                                        <!-- delete button -->
-                                        <button
-                                            class="delete-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
-                                            data-id="{{ $visitService->visit_services_ID }}"
-                                            onclick="confirmDeleteService({{ $visitService->visit_services_ID }})">
-                                            <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
-                                        </button>
+
+
+                                        {{-- delete button --}}
+                                        <form method="POST"
+                                            action="{{ route('visit-services.destroy', $visitService->visit_services_ID) }}"
+                                            class="inline delete-service-form">
+                                            @csrf
+                                            @method("DELETE")
+                                            <input type="hidden" name="visit_ID" value="{{ $visit->visit_ID ?? '' }}">
+
+                                            <button type="button"
+                                                class="delete-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
+                                                onclick="confirmDeleteWithSweetAlert(this)">
+                                                <img src="{{ asset('icons/delete_icon.svg') }}" alt="Delete">
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -131,25 +272,25 @@
                 </table>
             </div>
 
-            <!-- Mobile View -->
+            {{-- Mobile View --}}
             <div class="md:hidden">
                 @forelse ($visitServices as $index => $visitService)
                     <div class="border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
                         <div class="flex justify-between items-center">
-                            <div>
+                            <div class="view-service-btn border-btn" data-id="{{ $visitService->visit_services_ID }}">
                                 <p class="text-sm font-normal">
                                     <span class="inline-block mr-2 text-neutral-500">{{ $index + 1 }}.</span>
                                     {{ $visitService->service->name ?? 'Unknown Service' }}
                                 </p>
-                                @if($visitService->note)
-                                    <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
-                                @endif
+                                <!-- @if($visitService->note)
+                                                                        <p class="text-xs text-gray-500 mt-1 ml-6">Note: {{ $visitService->note }}</p>
+                                                                    @endif -->
                             </div>
                             <div class="flex items-center gap-3">
-                                <button class="edit-service-btn w-6 h-6" data-id="{{ $visitService->visit_services_ID }}"
-                                    data-service-id="{{ $visitService->service_ID }}"
-                                    data-note="{{ $visitService->note ?? '' }}"
-                                    onclick="openEditServiceModal({{ $visitService->visit_services_ID }}, {{ $visitService->service_ID }}, '{{ addslashes($visitService->note ?? '') }}')">
+                                {{-- edit button --}}
+                                <button
+                                    class="edit-service-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
+                                    data-id="{{ $visitService->visit_services_ID }}">
                                     <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                 </button>
                                 <button class="delete-service-btn w-6 h-6" data-id="{{ $visitService->visit_services_ID }}"
@@ -161,12 +302,68 @@
                     </div>
                 @empty
                     <div class="py-4 text-center text-gray-500">
-                        No services added to this visit yet. Click the button above to add a service.
+                        No services added to this visit yet. Click the "Add Service" button above to add a service.
                     </div>
                 @endforelse
             </div>
-        </div>
 
+            {{-- Pagination --}}
+            @if(isset($visitServices) && $visitServices instanceof \Illuminate\Pagination\LengthAwarePaginator && $visitServices->total() > $visitServices->perPage())
+                <div class="w-full px-4 sm:px-6 pb-6 flex flex-col sm:flex-row justify-between items-center mt-4">
+                    <div class="text-sm text-gray-600 mb-3 sm:mb-0">
+                        Showing {{ $visitServices->firstItem() ?? 0 }} to {{ $visitServices->lastItem() ?? 0 }} of
+                        {{ $visitServices->total() }} results
+                    </div>
+                    <div class="flex space-x-1">
+                        <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center">
+                            {{-- Previous Page Link --}}
+                            @if($visitServices->onFirstPage())
+                                <span
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md">
+                                    Previous
+                                </span>
+                            @else
+                                <a href="{{ $visitServices->previousPageUrl() }}&search={{ $search ?? '' }}&time_filter={{ $timeFilter ?? 'all_time' }}&visit_id={{ $visitId ?? '' }}"
+                                    rel="prev"
+                                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+                                    Previous
+                                </a>
+                            @endif
+
+                            {{-- Pagination Elements --}}
+                            @for ($i = 1; $i <= $visitServices->lastPage(); $i++)
+                                {{-- "Three Dots" Separator --}}
+                                @if ($i == $visitServices->currentPage())
+                                    <span aria-current="page"
+                                        class="relative inline-flex items-center px-4 py-2 mx-1 text-sm font-medium text-white bg-[#F91D7C] border border-[#F91D7C] cursor-default leading-5 rounded-md">
+                                        {{ $i }}
+                                    </span>
+                                @else
+                                    <a href="{{ $visitServices->url($i) }}&search={{ $search ?? '' }}&time_filter={{ $timeFilter ?? 'all_time' }}&visit_id={{ $visitId ?? '' }}"
+                                        class="relative inline-flex items-center px-4 py-2 mx-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+                                        {{ $i }}
+                                    </a>
+                                @endif
+                            @endfor
+
+                            {{-- Next Page Link --}}
+                            @if($visitServices->hasMorePages())
+                                <a href="{{ $visitServices->nextPageUrl() }}&search={{ $search ?? '' }}&time_filter={{ $timeFilter ?? 'all_time' }}&visit_id={{ $visitId ?? '' }}"
+                                    rel="next"
+                                    class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+                                    Next
+                                </a>
+                            @else
+                                <span
+                                    class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md">
+                                    Next
+                                </span>
+                            @endif
+                        </nav>
+                    </div>
+                </div>
+            @endif
+        </div>
 
 
 
@@ -184,7 +381,7 @@
                 $visitProducts = $visit->products ?? [];
             @endphp
 
-            <!-- Desktop View -->
+            {{-- Desktop View --}}
             <div class="hidden md:block">
                 <table class="w-full min-w-full table-auto">
                     <thead>
@@ -218,13 +415,13 @@
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
-                                        <!-- edit button -->
+                                        {{-- edit button --}}
                                         <button
                                             class="edit-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                             data-id="{{ $visitProduct->visit_products_ID }}">
                                             <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                         </button>
-                                        <!-- delete button -->
+                                        {{-- delete button --}}
                                         <button
                                             class="delete-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                             data-id="{{ $visitProduct->visit_products_ID }}">
@@ -244,7 +441,7 @@
                 </table>
             </div>
 
-            <!-- Mobile View -->
+            {{-- Mobile View --}}
             <div class="md:hidden">
                 @forelse ($visitProducts as $index => $visitProduct)
                     <div class="view-product-btn border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5"
@@ -264,13 +461,13 @@
                             </div>
 
                             <div class="flex items-center gap-2">
-                                <!-- edit button -->
+                                {{-- edit button --}}
                                 <button
                                     class="edit-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                     data-id="{{ $visitProduct->visit_products_ID }}">
                                     <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                 </button>
-                                <!-- delete button -->
+                                {{-- delete button --}}
                                 <button
                                     class="delete-product-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                     data-id="{{ $visitProduct->visit_products_ID }}">
@@ -304,14 +501,14 @@
                 </div>
             </div>
 
-           
+
         </div>
 
 
 
 
 
-        {{-- Prescription Content  --}}
+        {{-- Prescription Content --}}
         <div id="medications-content" class="tab-content hidden">
             <div class="flex justify-end mb-4">
                 <button id="addPrescriptionBtn" class="text-[#F91D7C] z-10 flex items-center">
@@ -319,7 +516,7 @@
                 </button>
             </div>
 
-            <!-- Desktop View -->
+            {{-- Desktop View --}}
             <div class="hidden md:block">
                 <table class="w-full min-w-full table-auto">
                     <thead>
@@ -345,13 +542,13 @@
                                 </td>
                                 <td class="py-3">
                                     <div class="flex justify-end items-center gap-3.5">
-                                        <!-- edit button -->
+                                        {{-- edit button --}}
                                         <button
                                             class="edit-prescription-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                             data-id="{{ $prescription->prescription_ID }}">
                                             <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                         </button>
-                                        <!-- delete button -->
+                                        {{-- delete button --}}
                                         <form class="delete-prescription-form"
                                             action="{{ route('prescriptions.destroy', $prescription->prescription_ID) }}"
                                             method="POST" style="display: inline;">
@@ -376,7 +573,7 @@
                 </table>
             </div>
 
-            <!-- Mobile View -->
+            {{-- Mobile View --}}
             <div class="md:hidden">
                 @forelse($visitRecord->prescriptions as $index => $prescription)
                     <div class="border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
@@ -389,13 +586,13 @@
                             </div>
 
                             <div class="flex items-center gap-2">
-                                <!-- edit button -->
+                                {{-- edit button --}}
                                 <button
                                     class="edit-prescription-btn w-6 h-6 relative overflow-hidden flex items-center justify-center"
                                     data-id="{{ $prescription->prescription_ID }}">
                                     <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit">
                                 </button>
-                                <!-- delete button -->
+                                {{-- delete button --}}
                                 <form class="delete-prescription-form"
                                     action="{{ route('prescriptions.destroy', $prescription->prescription_ID) }}"
                                     method="POST" style="display: inline;">
@@ -510,7 +707,7 @@
     </script>
 
 
-    <!-- JavaScript to handle horizontal scrolling and show/hide arrows -->
+    {{-- JavaScript to handle horizontal scrolling and show/hide arrows --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const tabsContainer = document.getElementById('tabs-carousel');
@@ -604,7 +801,7 @@
 
 
 
-   
+    <!-- diagnosis -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // DOM Elements
@@ -1034,7 +1231,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Delete prescription buttons
-            const deletePrescriptionBtns = document.querySelectorAll('.delete -prescription - btn');
+            const deletePrescriptionBtns = document.querySelectorAll('.delete-prescription-btn');
 
             // Add click event listener to each delete button
             deletePrescriptionBtns.forEach(btn => {
@@ -1095,7 +1292,7 @@
             });
 
             // Check for flash messages on page load (for regular form submissions)
-        
+
             if (typeof successMessage !== 'undefined' && successMessage) {
                 Swal.fire({
                     title: 'Success!',
@@ -1109,8 +1306,708 @@
 
 
 
+    {{--
+    <script>
+
+        // Visit Services Management JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            // Modal Elements
+            const availServiceModal = document.getElementById('availServiceModal');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const availServiceForm = document.getElementById('availServiceForm');
+            const availServiceBtn = document.getElementById('availServiceBtn');
+
+            // Open Modal Function
+            function openModal() {
+                // Get the visit ID from the page
+                const visitId = getVisitIdFromPage();
+
+                // Set the visit ID in the form
+                document.getElementById('visit_ID').value = visitId;
+
+                // Populate services dropdown from pre-loaded data
+                populateServicesDropdown();
+
+                // Show the modal
+                availServiceModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent body scrolling
+            }
+
+            // Helper function to get the visit ID from the current page
+            function getVisitIdFromPage() {
+                // Try to get it from a data attribute on a common element
+                const visitIdElement = document.querySelector('[data-visit-id]');
+                if (visitIdElement && visitIdElement.dataset.visitId) {
+                    return visitIdElement.dataset.visitId;
+                }
+
+                // Alternatively, extract from URL if following a pattern like /visits/{id}
+                const urlParts = window.location.pathname.split('/');
+                const visitIdIndex = urlParts.indexOf('visits') + 1;
+                if (visitIdIndex > 0 && visitIdIndex < urlParts.length) {
+                    return urlParts[visitIdIndex];
+                }
+
+                return '';
+            }
+
+            // Close Modal Function
+            function closeModal() {
+                availServiceModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Restore body scrolling
+
+                // Reset form
+                if (availServiceForm) {
+                    availServiceForm.reset();
+                }
+            }
+
+            // Function to populate services dropdown from pre-loaded data
+            function populateServicesDropdown() {
+                // Get the select element
+                const serviceSelect = document.getElementById('service_ID');
+
+                // Clear existing options
+                serviceSelect.innerHTML = '<option value="" disabled selected>Select Service</option>';
+
+                try {
+                    // Get services data from data attribute
+                    const servicesDataElement = document.getElementById('services-data');
+                    if (!servicesDataElement) {
+                        throw new Error('Services data element not found');
+                    }
+
+                    const servicesData = JSON.parse(servicesDataElement.dataset.services || '[]');
+
+                    if (!Array.isArray(servicesData) || servicesData.length === 0) {
+                        throw new Error('No services data available');
+                    }
+
+                    // Add services to dropdown
+                    servicesData.forEach(service => {
+                        const option = document.createElement('option');
+                        option.value = service.service_ID;
+
+                        // Format price to 2 decimal places
+                        const formattedPrice = parseFloat(service.price).toFixed(2);
+
+                        // Create option text with service name and price
+                        option.textContent = `${service.name} - ₱${formattedPrice}`;
+
+                        // Add option to select element
+                        serviceSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading services:', error);
+                    serviceSelect.innerHTML = '<option value="" disabled selected>Error loading services</option>';
+
+                    // Show error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to load services. Please try again.',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Failed to load services. Please try again.');
+                    }
+                }
+            }
+
+            // Event Listeners for opening modal
+            if (availServiceBtn) {
+                availServiceBtn.addEventListener('click', openModal);
+            }
+
+            // Event Listeners for closing modal
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeModal);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeModal);
+            }
+
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', closeModal);
+            }
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !availServiceModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // Form submission handler
+            if (availServiceForm) {
+                availServiceForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Validate form
+                    if (!validateForm()) {
+                        return;
+                    }
+
+                    // Get form data
+                    const formData = new FormData(availServiceForm);
+
+                    // Convert FormData to JSON object
+                    const visitServiceData = {};
+                    formData.forEach((value, key) => {
+                        visitServiceData[key] = value;
+                    });
+
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Show loading state
+                    const submitBtn = availServiceForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.textContent;
+                    submitBtn.textContent = 'Adding...';
+                    submitBtn.disabled = true;
+
+                    // Debug - log data before sending
+                    console.log("Form data before sending:", visitServiceData);
+
+                    // Send AJAX request using the existing controller with the correct route
+                    fetch('/visit-services', {  // Corrected route path
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(visitServiceData)
+                    })
+                        .then(response => {
+                            console.log("Response status:", response.status);
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    console.error("Error response:", data);
+                                    throw new Error(data.message || 'Server error occurred');
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Success response:", data);
+                            if (data.success) {
+                                // Show success message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: 'Service added successfully!',
+                                        confirmButtonColor: '#F91D7C'
+                                    }).then(() => {
+                                        // Reload the page to show the updated services list
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    alert('Service added successfully!');
+                                    window.location.reload();
+                                }
+
+                                // Close modal
+                                closeModal();
+                            } else {
+                                // Show error message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: data.message || 'Failed to add service',
+                                        confirmButtonColor: '#F91D7C'
+                                    });
+                                } else {
+                                    alert(data.message || 'Failed to add service');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            // Show error message
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: error.message || 'An error occurred while processing your request',
+                                    confirmButtonColor: '#F91D7C'
+                                });
+                            } else {
+                                alert(error.message || 'An error occurred while processing your request');
+                            }
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            submitBtn.textContent = originalBtnText;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+
+            // Form validation function
+            function validateForm() {
+                const serviceId = document.getElementById('service_ID').value;
+
+                if (!serviceId) {
+                    // Show validation error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            text: 'Please select a service',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Please select a service');
+                    }
+                    return false;
+                }
+
+                return true;
+            }
+        });
+    </script> --}}
 
 
+
+
+    <script>
+        // Visit Services Management JavaScript
+        document.addEventListener('DOMContentLoaded', function () {
+            // Modal Elements
+            const availServiceModal = document.getElementById('availServiceModal');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const availServiceForm = document.getElementById('availServiceForm');
+            const availServiceBtn = document.getElementById('availServiceBtn');
+
+            // Open Modal Function
+            function openModal() {
+                // Get the visit ID from the page
+                const visitId = getVisitIdFromPage();
+
+                // Set the visit ID in the form
+                document.getElementById('visit_ID').value = visitId;
+
+                // Populate services dropdown from pre-loaded data
+                populateServicesDropdown();
+
+                // Show the modal
+                availServiceModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent body scrolling
+            }
+
+            // Helper function to get the visit ID from the current page
+            function getVisitIdFromPage() {
+                // Try to get it from a data attribute on a common element
+                const visitIdElement = document.querySelector('[data-visit-id]');
+                if (visitIdElement && visitIdElement.dataset.visitId) {
+                    return visitIdElement.dataset.visitId;
+                }
+
+                // Alternatively, extract from URL if following a pattern like /visits/{id}
+                const urlParts = window.location.pathname.split('/');
+                const visitIdIndex = urlParts.indexOf('visits') + 1;
+                if (visitIdIndex > 0 && visitIdIndex < urlParts.length) {
+                    return urlParts[visitIdIndex];
+                }
+
+                return '';
+            }
+
+            // Close Modal Function
+            function closeModal() {
+                availServiceModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Restore body scrolling
+
+                // Reset form
+                if (availServiceForm) {
+                    availServiceForm.reset();
+                }
+            }
+
+            // Function to populate services dropdown from pre-loaded data
+            function populateServicesDropdown() {
+                // Get the select element
+                const serviceSelect = document.getElementById('service_ID');
+
+                // Clear existing options
+                serviceSelect.innerHTML = '<option value="" disabled selected>Select Service</option>';
+
+                try {
+                    // Get services data from data attribute
+                    const servicesDataElement = document.getElementById('services-data');
+                    if (!servicesDataElement) {
+                        throw new Error('Services data element not found');
+                    }
+
+                    const servicesData = JSON.parse(servicesDataElement.dataset.services || '[]');
+
+                    if (!Array.isArray(servicesData) || servicesData.length === 0) {
+                        throw new Error('No services data available');
+                    }
+
+                    // Add services to dropdown
+                    servicesData.forEach(service => {
+                        const option = document.createElement('option');
+                        option.value = service.service_ID;
+
+                        // Format price to 2 decimal places
+                        const formattedPrice = parseFloat(service.price).toFixed(2);
+
+                        // Create option text with service name and price
+                        option.textContent = `${service.name} - ₱${formattedPrice}`;
+
+                        // Add option to select element
+                        serviceSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading services:', error);
+                    serviceSelect.innerHTML = '<option value="" disabled selected>Error loading services</option>';
+
+                    // Show error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to load services. Please try again.',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Failed to load services. Please try again.');
+                    }
+                }
+            }
+
+            // Event Listeners for opening modal
+            if (availServiceBtn) {
+                availServiceBtn.addEventListener('click', openModal);
+            }
+
+            // Event Listeners for closing modal
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeModal);
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', closeModal);
+            }
+
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', closeModal);
+            }
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !availServiceModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // Form submission handler
+            if (availServiceForm) {
+                availServiceForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Validate form
+                    if (!validateForm()) {
+                        return;
+                    }
+
+                    // Get form data
+                    const formData = new FormData(availServiceForm);
+
+                    // Convert FormData to JSON object
+                    const visitServiceData = {};
+                    formData.forEach((value, key) => {
+                        visitServiceData[key] = value;
+                    });
+
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Show loading state
+                    const submitBtn = availServiceForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.textContent;
+                    submitBtn.textContent = 'Adding...';
+                    submitBtn.disabled = true;
+
+                    // Debug - log data before sending
+                    console.log("Form data before sending:", visitServiceData);
+
+                    // Send AJAX request using the existing controller with the correct route
+                    fetch('/visit-services', {  // Corrected route path
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(visitServiceData)
+                    })
+                        .then(response => {
+                            console.log("Response status:", response.status);
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    console.error("Error response:", data);
+                                    throw new Error(data.message || 'Server error occurred');
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Success response:", data);
+                            if (data.success) {
+                                // Show success message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: 'Service added successfully!',
+                                        confirmButtonColor: '#F91D7C'
+                                    }).then(() => {
+                                        // Reload the page to refresh the services list
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    alert('Service added successfully!');
+                                    // Reload the page to refresh the services list
+                                    window.location.reload();
+                                }
+
+                                // Close modal
+                                closeModal();
+                            } else {
+                                // Show error message
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: data.message || 'Failed to add service',
+                                        confirmButtonColor: '#F91D7C'
+                                    });
+                                } else {
+                                    alert(data.message || 'Failed to add service');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            // Show error message
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: error.message || 'An error occurred while processing your request',
+                                    confirmButtonColor: '#F91D7C'
+                                });
+                            } else {
+                                alert(error.message || 'An error occurred while processing your request');
+                            }
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            submitBtn.textContent = originalBtnText;
+                            submitBtn.disabled = false;
+                        });
+                });
+            }
+
+            // Form validation function
+            function validateForm() {
+                const serviceId = document.getElementById('service_ID').value;
+
+                if (!serviceId) {
+                    // Show validation error using SweetAlert if available, otherwise use alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Error',
+                            text: 'Please select a service',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    } else {
+                        alert('Please select a service');
+                    }
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Define global functions for edit and delete operations
+            window.openEditServiceModal = function (visitServiceId, serviceId, note) {
+                // This function will be implemented later
+                console.log(`Edit service: ${visitServiceId}, Service ID: ${serviceId}, Note: ${note}`);
+                alert("Edit functionality will be implemented soon!");
+            };
+
+            window.confirmDeleteService = function (visitServiceId) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#F91D7C',
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            deleteVisitService(visitServiceId);
+                        }
+                    });
+                } else {
+                    if (confirm('Are you sure you want to delete this service?')) {
+                        deleteVisitService(visitServiceId);
+                    }
+                }
+            };
+
+            // Function to delete a visit service
+            // function deleteVisitService(visitServiceId) {
+            //     // Get CSRF token
+            //     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            //     fetch(`/visit-services/${visitServiceId}`, {
+            //         method: 'DELETE',
+            //         headers: {
+            //             'X-CSRF-TOKEN': csrfToken,
+            //             'Accept': 'application/json'
+            //         }
+            //     })
+            //         .then(response => {
+            //             if (!response.ok) {
+            //                 return response.json().then(data => {
+            //                     throw new Error(data.message || 'Server error occurred');
+            //                 });
+            //             }
+            //             return response.json();
+            //         })
+            //         .then(data => {
+            //             if (data.success) {
+            //                 // Show success message
+            //                 if (typeof Swal !== 'undefined') {
+            //                     Swal.fire({
+            //                         icon: 'success',
+            //                         title: 'Deleted!',
+            //                         text: 'Service has been removed successfully.',
+            //                         confirmButtonColor: '#F91D7C'
+            //                     }).then(() => {
+            //                         // Reload the page to refresh the services list
+            //                         window.location.reload();
+            //                     });
+            //                 } else {
+            //                     alert('Service has been removed successfully.');
+            //                     // Reload the page to refresh the services list
+            //                     window.location.reload();
+            //                 }
+            //             } else {
+            //                 throw new Error(data.message || 'Failed to delete service');
+            //             }
+            //         })
+            //         .catch(error => {
+            //             console.error('Error:', error);
+
+            //             // Show error message
+            //             if (typeof Swal !== 'undefined') {
+            //                 Swal.fire({
+            //                     icon: 'error',
+            //                     title: 'Error',
+            //                     text: error.message || 'An error occurred while deleting the service',
+            //                     confirmButtonColor: '#F91D7C'
+            //                 });
+            //             } else {
+            //                 alert(error.message || 'An error occurred while deleting the service');
+            //             }
+            //         });
+            // }
+        });
+    </script>
+
+
+    <script>
+        // SweetAlert confirmation for service deletion
+        function confirmDeleteWithSweetAlert(buttonElement) {
+            const form = buttonElement.closest('form');
+
+            Swal.fire({
+                title: 'Delete Service?',
+                text: 'Are you sure you want to delete this service?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#F91D7C',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit the form
+                    submitDeleteForm(form);
+                }
+            });
+        }
+
+        // Function to submit the delete form using AJAX
+        function submitDeleteForm(form) {
+            // Create a FormData object from the form
+            const formData = new FormData(form);
+
+            // Add method and CSRF token
+            formData.append('_method', 'DELETE');
+
+            // Create fetch options
+            const options = {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            };
+
+            // Submit the form using fetch
+            fetch(form.action, options)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'The service has been deleted successfully.',
+                            icon: 'success',
+                            confirmButtonColor: '#F91D7C'
+                        }).then(() => {
+                            // Reload the page or update the UI
+                            location.reload();
+                        });
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message || 'Something went wrong.',
+                            icon: 'error',
+                            confirmButtonColor: '#F91D7C'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Something went wrong while deleting the service.',
+                        icon: 'error',
+                        confirmButtonColor: '#F91D7C'
+                    });
+                });
+        }
+    </script>
 
 
 
