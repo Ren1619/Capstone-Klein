@@ -1,193 +1,187 @@
-<!-- Feedback Modal -->
+<!-- Feedback Details Modal -->
 <div id="feedbackModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
         <!-- Modal Background Overlay -->
         <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity"></div>
-        
+
         <!-- Modal Content -->
         <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto z-10">
             <!-- Modal Header -->
             <div class="flex items-center justify-between p-6 pb-0">
                 <h3 class="text-2xl font-bold">
-                    <span class="text-[#F91D7C]">Rate</span> your experience
+                    <span class="text-[#F91D7C]">Feedback</span> Details
                 </h3>
                 <button type="button" class="text-gray-400 hover:text-gray-500" id="closeFeedbackModalBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            
+
             <!-- Modal Body -->
             <div class="p-6">
-                <form id="feedbackForm">
-                    @csrf
-                    <input type="hidden" id="feedback_appointment_id" name="appointment_ID">
-                    
-                    <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-medium mb-2">How would you rate your experience?</label>
-                        <div class="flex space-x-4 justify-center">
-                            @for ($i = 1; $i <= 5; $i++)
-                                <div class="rating-option">
-                                    <input type="radio" id="rating-{{ $i }}" name="rating" value="{{ $i }}" class="hidden" {{ $i == 5 ? 'checked' : '' }}>
-                                    <label for="rating-{{ $i }}" class="cursor-pointer">
-                                        <svg class="w-10 h-10 text-gray-300 hover:text-[#F91D7C] transition-colors rating-star" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                    </label>
-                                </div>
-                            @endfor
+                <div class="mb-6">
+                    <div class="flex flex-col space-y-4">
+                        <!-- Appointment Info -->
+                        <div class="border-b pb-2">
+                            <h4 class="text-gray-700 text-sm font-medium mb-2">Appointment Details</h4>
+                            <p class="text-gray-800"><span class="font-medium">Code:</span> APP-<span
+                                    id="feedback-appointment-id"></span></p>
+                            <p class="text-gray-800"><span class="font-medium">Date:</span> <span
+                                    id="feedback-appointment-date"></span></p>
+                            <p class="text-gray-800"><span class="font-medium">Type:</span> <span
+                                    id="feedback-appointment-type"></span></p>
+                        </div>
+
+                        <!-- Rating Display -->
+                        <div class="border-b pb-2">
+                            <h4 class="text-gray-700 text-sm font-medium mb-2">Customer Rating</h4>
+                            <div class="flex space-x-1" id="feedback-rating-display">
+                                <!-- Stars will be added here via JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Feedback Description -->
+                        <div>
+                            <h4 class="text-gray-700 text-sm font-medium mb-2">Customer Comments</h4>
+                            <div class="bg-gray-50 rounded-md p-3" id="feedback-description-display">
+                                <!-- Feedback text will be added here -->
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mb-6">
-                        <label for="feedback-description" class="block text-gray-700 text-sm font-medium mb-2">Tell us about your experience (optional)</label>
-                        <textarea 
-                            id="feedback-description" 
-                            name="description" 
-                            rows="4" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
-                            placeholder="Share your thoughts..."></textarea>
-                    </div>
-                    
-                    <!-- Button Actions -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <button type="submit" class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
-                            Submit
-                        </button>
-                        <button type="button" id="cancelFeedbackBtn" class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
+                </div>
+
+                <!-- Button Actions -->
+                <div class="mt-4">
+                    <button type="button" id="closeFeedbackBtn"
+                        class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get the feedback modal and its elements
-    const feedbackModal = document.getElementById('feedbackModal');
-    const closeFeedbackModalBtn = document.getElementById('closeFeedbackModalBtn');
-    const cancelFeedbackBtn = document.getElementById('cancelFeedbackBtn');
-    const feedbackForm = document.getElementById('feedbackForm');
-    const ratingOptions = document.querySelectorAll('.rating-option input');
-    const ratingStars = document.querySelectorAll('.rating-star');
-    
-    // Function to open feedback modal
-    function openFeedbackModal() {
-        if (feedbackModal) {
-            feedbackModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get the feedback modal and its elements
+        const feedbackModal = document.getElementById('feedbackModal');
+        const closeFeedbackModalBtn = document.getElementById('closeFeedbackModalBtn');
+        const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+
+        // Function to close feedback modal
+        function closeFeedbackModal() {
+            if (feedbackModal) {
+                feedbackModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
         }
-    }
-    
-    // Function to close feedback modal
-    function closeFeedbackModal() {
-        if (feedbackModal) {
-            feedbackModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-            if (feedbackForm) feedbackForm.reset();
-            resetStars();
-        }
-    }
-    
-    // Function to highlight stars based on selection
-    function highlightStars(rating) {
-        ratingStars.forEach((star, index) => {
-            if (index < rating) {
-                star.classList.add('text-[#F91D7C]');
-                star.classList.remove('text-gray-300');
-            } else {
-                star.classList.remove('text-[#F91D7C]');
-                star.classList.add('text-gray-300');
+
+        // Function to open feedback modal with details
+        function openFeedbackDetails(feedbackId) {
+            if (!feedbackId) {
+                console.error('No feedback ID provided');
+                return;
             }
-        });
-    }
-    
-    // Function to reset star highlights
-    function resetStars() {
-        ratingStars.forEach(star => {
-            star.classList.remove('text-[#F91D7C]');
-            star.classList.add('text-gray-300');
-        });
-        
-        // Reset selected radio button
-        ratingOptions.forEach((option, index) => {
-            if (index === 4) { // 5-star rating
-                option.checked = true;
-                highlightStars(5);
-            } else {
-                option.checked = false;
-            }
-        });
-    }
-    
-    // Add event handlers for modal controls
-    if (closeFeedbackModalBtn) closeFeedbackModalBtn.addEventListener('click', closeFeedbackModal);
-    if (cancelFeedbackBtn) cancelFeedbackBtn.addEventListener('click', closeFeedbackModal);
-    
-    // Add event handlers for star rating
-    ratingOptions.forEach((option, index) => {
-        option.addEventListener('change', function() {
-            highlightStars(index + 1);
-        });
-        
-        // Also highlight on hover
-        option.parentElement.addEventListener('mouseenter', function() {
-            highlightStars(index + 1);
-        });
-        
-        option.parentElement.addEventListener('mouseleave', function() {
-            // On mouseleave, highlight only the selected rating
-            const selectedRating = document.querySelector('.rating-option input:checked');
-            if (selectedRating) {
-                highlightStars(parseInt(selectedRating.value));
-            } else {
-                resetStars();
-            }
-        });
-    });
-    
-    // Handle form submission
-    if (feedbackForm) {
-        feedbackForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            fetch('{{ route("feedbacks.store") }}', {
-                method: 'POST',
+
+            console.log('Opening feedback details for ID:', feedbackId);
+
+            // Fetch feedback details from the server
+            fetch(`/api/feedbacks/${feedbackId}`, {
+                method: 'GET',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Thank you for your feedback!');
-                    closeFeedbackModal();
-                } else {
-                    alert('Failed to submit feedback. Please try again.');
                 }
             })
-            .catch(error => {
-                console.error('Error submitting feedback:', error);
-                alert('An error occurred while submitting your feedback');
-            });
-        });
-    }
-    
-    // Set default rating (5 stars)
-    resetStars();
-    
-    // Expose methods to window for external access
-    window.feedbackFunctions = {
-        open: openFeedbackModal,
-        close: closeFeedbackModal
-    };
-});
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    if (data.success) {
+                        // Populate the modal with feedback details
+                        populateFeedbackDetails(data.feedback);
+
+                        // Show the modal
+                        feedbackModal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        alert('Failed to load feedback details: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading feedback details:', error);
+                    alert('An error occurred while loading feedback details');
+                });
+        }
+
+        // Function to populate feedback details in the modal
+        function populateFeedbackDetails(feedback) {
+            console.log('Populating feedback details:', feedback);
+
+            // Set appointment details
+            document.getElementById('feedback-appointment-id').textContent = feedback.appointment_ID;
+
+            // Format the date if it's a string
+            let appointmentDate = feedback.appointment.date;
+            if (typeof appointmentDate === 'string' && appointmentDate.includes('-')) {
+                // Convert YYYY-MM-DD to a more readable format
+                const dateObj = new Date(appointmentDate);
+                appointmentDate = dateObj.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            document.getElementById('feedback-appointment-date').textContent = appointmentDate;
+            document.getElementById('feedback-appointment-type').textContent = feedback.appointment.appointment_type;
+
+            // Set rating stars
+            const ratingDisplay = document.getElementById('feedback-rating-display');
+            ratingDisplay.innerHTML = ''; // Clear existing stars
+
+            for (let i = 1; i <= 5; i++) {
+                const starSvg = document.createElement('div');
+
+                if (i <= feedback.rating) {
+                    // Filled star for ratings
+                    starSvg.innerHTML = `
+                        <svg class="w-6 h-6 text-[#F91D7C]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                    `;
+                } else {
+                    // Empty star for remaining
+                    starSvg.innerHTML = `
+                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                    `;
+                }
+
+                ratingDisplay.appendChild(starSvg);
+            }
+
+            // Set feedback description
+            const descriptionDisplay = document.getElementById('feedback-description-display');
+            descriptionDisplay.textContent = feedback.description || 'No comments provided';
+        }
+
+        // Add event handlers for modal controls
+        if (closeFeedbackModalBtn) closeFeedbackModalBtn.addEventListener('click', closeFeedbackModal);
+        if (closeFeedbackBtn) closeFeedbackBtn.addEventListener('click', closeFeedbackModal);
+
+        // Expose methods to window for external access
+        window.feedbackFunctions = {
+            open: openFeedbackDetails,
+            close: closeFeedbackModal
+        };
+
+        console.log('Feedback modal functions initialized');
+    });
 </script>

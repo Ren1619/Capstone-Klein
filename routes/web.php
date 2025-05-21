@@ -112,3 +112,10 @@ Route::get('/pos', [POSController::class, 'index']);
 // NON-API Sales routes (for direct web access)
 Route::get('/sales/daily', [SalesController::class, 'getDailySales']);
 Route::post('/sales', [SalesController::class, 'store']);
+
+Route::middleware(['web'])->group(function () {
+    Route::post('/api/submit-feedback', [FeedbackController::class, 'submitFeedback']);
+    Route::post('/api/validate-appointment-code', [FeedbackController::class, 'validateAppointmentCode']);
+});
+Route::get('/api/appointments/{id}/check-feedback-eligibility', [AppointmentController::class, 'checkFeedbackEligibility']);
+Route::get('/api/appointments/completed-without-feedback', [AppointmentController::class, 'getCompletedWithoutFeedback']);

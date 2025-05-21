@@ -65,6 +65,10 @@ Route::prefix('sales')->group(function () {
     Route::get('/{sale}', [SalesController::class, 'show']); // This should be LAST
 });
 
+Route::get('/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
+
+Route::get('/api/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
+
 // Cart items search routes
 // Route::get('product-cart-items', [SalesController::class, 'searchProductItems']);
 // Route::get('service-cart-items', [SalesController::class, 'searchServiceItems']);
