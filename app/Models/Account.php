@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Laravel\Fortify\TwoFactorAuthenticatable; // Add this line
 
-class Account extends Model
+class Account extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable; // Add TwoFactorAuthenticatable
 
     protected $primaryKey = 'account_ID';
-    
+
     protected $fillable = [
         'role_ID',
         'branch_ID',
@@ -24,11 +27,15 @@ class Account extends Model
 
     protected $hidden = [
         'password',
+        'remember_token',
+        'two_factor_recovery_codes', // Add this line
+        'two_factor_secret', // Add this line
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     /**

@@ -142,6 +142,14 @@ class AppointmentController extends Controller
             'status' => 'pending'
         ]);
 
+        // Log appointment creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Appointment Creation',
+            'descriptions' => 'Created appointment for ' . $request->first_name . ' ' . $request->last_name . ' on ' . $request->date . ' at ' . $request->time . ' (' . $request->appointment_type . ')',
+            'timestamp' => now(),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Appointment created successfully',
@@ -168,9 +176,8 @@ class AppointmentController extends Controller
             ]);
 
             $appointment = Appointment::findOrFail($id);
-            $oldStatus = $appointment->status;  // Store the old status before changing
+            $oldStatus = $appointment->status;
 
-            // Additional validation for status transitions
             if ($request->status === 'upcoming') {
                 $appointmentDate = Carbon::parse($appointment->date);
                 if ($appointmentDate->isToday()) {
@@ -184,6 +191,14 @@ class AppointmentController extends Controller
             $appointment->status = $request->status;
             $appointment->save();
 
+            // Log appointment status change
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Appointment Status Update',
+                'descriptions' => 'Changed appointment status for ' . $appointment->first_name . ' ' . $appointment->last_name . ' from ' . $oldStatus . ' to ' . $request->status,
+                'timestamp' => now(),
+            ]);
+
             Log::info('Status updated successfully', [
                 'appointment_id' => $id,
                 'old_status' => $oldStatus,
@@ -196,7 +211,6 @@ class AppointmentController extends Controller
                 'appointment' => $appointment
             ]);
         } catch (\Exception $e) {
-
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating status: ' . $e->getMessage()

@@ -14,31 +14,105 @@ class LogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Log::with('account');
+        $perPage = 20; // Logs per page
+        $currentTab = $request->get('tab', 'all');
 
-        // Filter by account if provided
-        if ($request->has('account_id')) {
-            $query->where('account_ID', $request->account_id);
+        // Base query
+        $query = Log::with(['account.branch']);
+
+        // Apply time filter
+        if ($request->has('time_filter') && $request->time_filter !== 'all_time') {
+            switch ($request->time_filter) {
+                case 'this_week':
+                    $query->where('timestamp', '>=', now()->startOfWeek());
+                    break;
+                case 'this_month':
+                    $query->where('timestamp', '>=', now()->startOfMonth());
+                    break;
+                case 'last_3_months':
+                    $query->where('timestamp', '>=', now()->subMonths(3));
+                    break;
+                case 'last_year':
+                    $query->where('timestamp', '>=', now()->subYear());
+                    break;
+            }
         }
 
-        // Filter by action if provided
-        if ($request->has('action')) {
-            $query->withAction($request->action);
+        // Apply category filter
+        if ($currentTab !== 'all') {
+            switch ($currentTab) {
+                case 'patients':
+                    $query->where(function ($q) {
+                        $q->where('actions', 'LIKE', '%patient%')
+                            ->orWhere('actions', 'LIKE', '%profile%');
+                    });
+                    break;
+                case 'appointments':
+                    $query->where('actions', 'LIKE', '%appointment%');
+                    break;
+                case 'services':
+                    $query->where('actions', 'LIKE', '%service%');
+                    break;
+                case 'pos':
+                    $query->where(function ($q) {
+                        $q->where('actions', 'LIKE', '%sale%')
+                            ->orWhere('actions', 'LIKE', '%payment%')
+                            ->orWhere('actions', 'LIKE', '%transaction%');
+                    });
+                    break;
+                case 'inventory':
+                    $query->where(function ($q) {
+                        $q->where('actions', 'LIKE', '%product%')
+                            ->orWhere('actions', 'LIKE', '%inventory%');
+                    });
+                    break;
+                case 'clinic':
+                    $query->where(function ($q) {
+                        $q->where('actions', 'LIKE', '%branch%')
+                            ->orWhere('actions', 'LIKE', '%account%')
+                            ->orWhere('actions', 'LIKE', '%login%')
+                            ->orWhere('actions', 'LIKE', '%logout%')
+                            ->orWhere('actions', 'LIKE', '%registration%');
+                    });
+                    break;
+            }
         }
 
-        // Filter by date range if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->inDateRange($request->start_date, $request->end_date);
-        }
+        // Get paginated results
+        $logs = $query->orderBy('timestamp', 'desc')
+            ->paginate($perPage)
+            ->appends($request->all()); // Keep URL parameters
 
-        $logs = $query->orderBy('timestamp', 'desc')->paginate(20);
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $logs,
-        ]);
+        // Get simple counts for tabs (only for current filters)
+        $logCounts = [
+            'all' => Log::when($request->time_filter !== 'all_time', function ($q) use ($request) {
+                return $this->applyTimeFilter($q, $request->time_filter);
+            })->count(),
+            // We'll calculate other counts only when needed to keep it simple
+        ];
+
+        return view('logs.logs', compact('logs', 'logCounts', 'currentTab'));
     }
 
+
+    /**
+     * Helper method to apply time filter
+     */
+    private function applyTimeFilter($query, $timeFilter)
+    {
+        switch ($timeFilter) {
+            case 'this_week':
+                return $query->where('timestamp', '>=', now()->startOfWeek());
+            case 'this_month':
+                return $query->where('timestamp', '>=', now()->startOfMonth());
+            case 'last_3_months':
+                return $query->where('timestamp', '>=', now()->subMonths(3));
+            case 'last_year':
+                return $query->where('timestamp', '>=', now()->subYear());
+            default:
+                return $query;
+        }
+    }
     /**
      * Store a newly created log.
      */

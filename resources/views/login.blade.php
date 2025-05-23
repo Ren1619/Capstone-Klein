@@ -181,7 +181,7 @@
             <!-- Appointment options in mobile menu -->
             <div class="mt-2 border-t border-neutral-200 pt-2">
                 <div class="p-3.5 text-black text-sm font-medium leading-none">Appointment</div>
-                <button  class="addAppointmentBtn p-3.5 pl-10 flex items-center hover:bg-[#F91D7C]/10">
+                <button class="addAppointmentBtn p-3.5 pl-10 flex items-center hover:bg-[#F91D7C]/10">
                     <div class="text-black text-sm font-normal leading-none">Book an appointment</div>
                 </button>
                 <button class="cancelAppointmentBtn p-3.5 pl-10 flex items-center hover:bg-[#F91D7C]/10">
@@ -197,7 +197,7 @@
     <!-- Dropdown Menu positioned at the document root level -->
     <div id="dropdownMenu"
         class="hidden fixed z-[9999] bg-white border border-neutral-200 rounded-[5px] p-[5px] shadow-lg w-48">
-        <button 
+        <button
             class="addAppointmentBtn block w-full px-3 py-2.5 rounded-[5px] text-black text-xs font-normal hover:bg-[#F91D7C]/10 hover:text-[#FF006E] transition-all">
             Book an appointment
         </button>
@@ -225,59 +225,37 @@
             </div>
 
             <!-- Form Section -->
-            <div class="px-6 sm:px-12 lg:px-24 py-8 flex flex-col justify-center items-center gap-3.5">
-                <div class="w-full flex justify-center items-start">
-                    <div class="text-center">
-                        <span class="text-[#FF006E] text-3xl sm:text-4xl lg:text-5xl font-bold">Sign </span>
-                        <span class="text-black text-3xl sm:text-4xl lg:text-5xl font-bold">In</span>
-                    </div>
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <!-- Email field -->
+                <div>
+                    <label for="email">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus />
                 </div>
 
-                <div class="w-full max-w-md flex flex-col justify-start items-start gap-3.5">
-                    <!-- Email Input -->
-                    <div class="w-full h-20 py-3.5 border-b border-black flex justify-start items-end">
-                        <div class="flex justify-start items-center gap-2.5 w-full">
-                            <div class="w-6 h-6 relative overflow-hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <input type="email" placeholder="Email"
-                                class="w-full border-none focus:outline-none bg-transparent text-base font-normal leading-none" />
-                        </div>
-                    </div>
-
-                    <!-- Password Input -->
-                    <div class="w-full h-20 py-3.5 border-b border-black flex justify-start items-end">
-                        <div class="flex justify-start items-center gap-2.5 w-full">
-                            <div class="w-6 h-6 relative overflow-hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                            </div>
-                            <input type="password" placeholder="Password"
-                                class="w-full border-none focus:outline-none bg-transparent text-base font-normal leading-none" />
-                        </div>
-                    </div>
-
-                    <!-- Button -->
-                    <div class="w-full h-20 py-3.5 flex flex-col justify-center items-center gap-3.5">
-                        <a href="{{ url('/dashboard') }}"
-                            class="w-full h-10 px-4 py-1 bg-[#FF006E] hover:bg-[#e0005e] rounded-md flex justify-center items-center text-white text-sm font-semibold leading-none tracking-tight transition duration-200">
-                            Sign In
-                        </a>
-                    </div>
-
-                    <!-- Forgot Password -->
-                    <div class="w-full text-center text-black text-sm font-light hover:text-[#FF006E] cursor-pointer">
-                        Forgot Password?
-                    </div>
+                <!-- Password field -->
+                <div class="mt-4">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" required autocomplete="current-password" />
                 </div>
-            </div>
+
+                <!-- Remember me -->
+                <div class="mt-4">
+                    <label for="remember_me">
+                        <input id="remember_me" type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                </div>
+
+                <!-- Submit button -->
+                <div class="w-full h-20 py-3.5 flex flex-col justify-center items-center gap-3.5">
+                    <button type="submit"
+                        class="w-full h-10 px-4 py-1 bg-[#FF006E] hover:bg-[#e0005e] rounded-md flex justify-center items-center text-white text-sm font-semibold leading-none tracking-tight transition duration-200">
+                        Sign In
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

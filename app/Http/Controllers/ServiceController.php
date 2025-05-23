@@ -17,7 +17,7 @@ class ServiceController extends Controller
     {
         $services = Service::with('category')->paginate(10);
         $categories = Category::all();
-        
+
         return view('services.index', compact('services', 'categories'));
     }
 
@@ -45,8 +45,17 @@ class ServiceController extends Controller
             'status' => $validated['status'],
         ]);
 
+        // Log service creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Service Creation',
+            'descriptions' => 'Created new service: ' . $validated['name'] . ' (₱' . number_format($validated['price'], 2) . ')',
+            'timestamp' => now(),
+        ]);
+
         return redirect()->route('services.index')->with('success', 'Service created successfully');
     }
+
 
     /**
      * Display the specified service.
@@ -78,6 +87,19 @@ class ServiceController extends Controller
         ]);
 
         $service = Service::findOrFail($id);
+
+        // Track changes for logging
+        $changes = [];
+        if ($service->name != $validated['name']) {
+            $changes[] = 'name: ' . $service->name . ' → ' . $validated['name'];
+        }
+        if ($service->price != $validated['price']) {
+            $changes[] = 'price: ₱' . number_format($service->price, 2) . ' → ₱' . number_format($validated['price'], 2);
+        }
+        if ($service->status != $validated['status']) {
+            $changes[] = 'status: ' . $service->status . ' → ' . $validated['status'];
+        }
+
         $service->update([
             'name' => $validated['name'],
             'category_ID' => $validated['category_id'],
@@ -86,9 +108,18 @@ class ServiceController extends Controller
             'status' => $validated['status'],
         ]);
 
+        // Log service update
+        if (!empty($changes)) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Service Update',
+                'descriptions' => 'Updated service ' . $validated['name'] . ': ' . implode(', ', $changes),
+                'timestamp' => now(),
+            ]);
+        }
+
         return redirect()->route('services.index')->with('success', 'Service updated successfully');
     }
-
     /**
      * Remove the specified service from storage.
      *
@@ -98,7 +129,19 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         $service = Service::findOrFail($id);
+
+        // Store service details before deletion
+        $serviceInfo = $service->name . ' (₱' . number_format($service->price, 2) . ')';
+
         $service->delete();
+
+        // Log service deletion
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Service Deletion',
+            'descriptions' => 'Deleted service: ' . $serviceInfo,
+            'timestamp' => now(),
+        ]);
 
         return redirect()->route('services.index')->with('success', 'Service deleted successfully');
     }

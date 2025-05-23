@@ -15,7 +15,7 @@ class AccountController extends Controller
     public function index()
     {
         $accounts = Account::with(['role', 'branch'])->paginate(10);
-        
+
         return response()->json([
             'status' => 'success',
             'data' => $accounts,
@@ -54,12 +54,21 @@ class AccountController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Log account creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Account Creation',
+            'descriptions' => 'Created new account for: ' . $request->first_name . ' ' . $request->last_name . ' (' . $request->email . ')',
+            'timestamp' => now(),
+        ]);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Account created successfully',
             'data' => $account->load(['role', 'branch']),
         ], 201);
     }
+
 
     /**
      * Display the specified account.
@@ -113,12 +122,32 @@ class AccountController extends Controller
         }
 
         $updateData = $request->all();
-        
+
         if (isset($updateData['password'])) {
             $updateData['password'] = Hash::make($updateData['password']);
         }
 
+        // Store old values for logging
+        $changes = [];
+        foreach ($updateData as $field => $newValue) {
+            if ($field !== 'password' && $account->{$field} != $newValue) {
+                $changes[] = $field . ': ' . $account->{$field} . ' → ' . $newValue;
+            } elseif ($field === 'password') {
+                $changes[] = 'password updated';
+            }
+        }
+
         $account->update($updateData);
+
+        // Log account update
+        if (!empty($changes)) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Account Update',
+                'descriptions' => 'Updated account ' . $account->first_name . ' ' . $account->last_name . ': ' . implode(', ', $changes),
+                'timestamp' => now(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -141,7 +170,18 @@ class AccountController extends Controller
             ], 404);
         }
 
+        // Store account details before deletion
+        $accountInfo = $account->first_name . ' ' . $account->last_name . ' (' . $account->email . ')';
+
         $account->delete();
+
+        // Log account deletion
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Account Deletion',
+            'descriptions' => 'Deleted account: ' . $accountInfo,
+            'timestamp' => now(),
+        ]);
 
         return response()->json([
             'status' => 'success',

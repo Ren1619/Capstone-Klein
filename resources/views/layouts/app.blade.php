@@ -115,12 +115,63 @@
                             <img src="{{ asset('icons/notification_icon.svg') }}" alt="Notifications">
                         </div>
                     </div>
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-full overflow-hidden">
-                            <img src="{{ asset('images/images.png') }}" alt="Profile"
-                                class="w-full h-full object-cover">
+
+                    <!-- Account Dropdown -->
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false"
+                        @close.stop="open = false">
+                        <!-- Dropdown Trigger -->
+                        <div @click="open = ! open" class="flex items-center gap-2.5 cursor-pointer">
+                            <div class="w-7 h-7 rounded-full overflow-hidden">
+                                <img src="{{ asset('images/images.png') }}" alt="Profile"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-black text-sm font-normal leading-none hidden sm:block">
+                                {{ Auth::user()->first_name ?? 'Admin' }} {{ Auth::user()->last_name ?? 'Name' }}
+                            </div>
+
+                            <!-- Dropdown Arrow -->
+                            <div class="ml-1 hidden sm:block">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
                         </div>
-                        <div class="text-black text-sm font-normal leading-none hidden sm:block">Admin Name</div>
+
+                        <!-- Dropdown Content -->
+                        <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 z-50 mt-2 w-48 rounded-md shadow-lg origin-top-right bg-white"
+                            style="display: none;">
+                            <div class="rounded-md ring-1 ring-black ring-opacity-5 py-1 bg-white">
+                                <!-- Profile Link -->
+                                @if(Route::has('profile.edit'))
+                                    <a href="{{ route('profile.edit') }}"
+                                        class="block px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                        Profile
+                                    </a>
+                                @endif
+                                <a href="#"
+                                    class="block px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                    Settings
+                                </a>
+
+                                <!-- Logout Form -->
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                        class="block w-full text-left px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                        Log Out
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

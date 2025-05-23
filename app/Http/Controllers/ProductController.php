@@ -92,6 +92,14 @@ class ProductController extends Controller
         $product->quantity = $request->quantity;
         $product->save();
 
+        // Log product creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Product Creation',
+            'descriptions' => 'Added new product: ' . $request->product_name . ' (₱' . number_format($request->price, 2) . ', qty: ' . $request->quantity . ')',
+            'timestamp' => now(),
+        ]);
+
         return redirect()->route('inventory.index')->with('success', 'Product added successfully!');
     }
 
@@ -114,6 +122,19 @@ class ProductController extends Controller
         ]);
 
         $product = Product::findOrFail($id);
+
+        // Track changes for logging
+        $changes = [];
+        if ($product->name != $request->product_name) {
+            $changes[] = 'name: ' . $product->name . ' → ' . $request->product_name;
+        }
+        if ($product->price != $request->price) {
+            $changes[] = 'price: ₱' . number_format($product->price, 2) . ' → ₱' . number_format($request->price, 2);
+        }
+        if ($product->quantity != $request->quantity) {
+            $changes[] = 'quantity: ' . $product->quantity . ' → ' . $request->quantity;
+        }
+
         $product->branch_ID = $request->branch_id;
         $product->category_ID = $request->category_id;
         $product->name = $request->product_name;
@@ -122,13 +143,35 @@ class ProductController extends Controller
         $product->quantity = $request->quantity;
         $product->save();
 
+        // Log product update
+        if (!empty($changes)) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Product Update',
+                'descriptions' => 'Updated product ' . $request->product_name . ': ' . implode(', ', $changes),
+                'timestamp' => now(),
+            ]);
+        }
+
         return redirect()->route('inventory.index')->with('success', 'Product updated successfully!');
     }
 
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
+
+        // Store product details before deletion
+        $productInfo = $product->name . ' (₱' . number_format($product->price, 2) . ', qty: ' . $product->quantity . ')';
+
         $product->delete();
+
+        // Log product deletion
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Product Deletion',
+            'descriptions' => 'Deleted product: ' . $productInfo,
+            'timestamp' => now(),
+        ]);
 
         return redirect()->route('inventory.index')->with('success', 'Product deleted successfully!');
     }

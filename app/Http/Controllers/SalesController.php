@@ -108,6 +108,7 @@ class SalesController extends Controller
             \Log::info('Sale created with ID: ' . $sale->sale_ID);
 
             // Process product items
+            $itemDetails = [];
             if (!empty($validated['product_items'])) {
                 foreach ($validated['product_items'] as $item) {
                     $product = Product::find($item['id']);
@@ -123,6 +124,7 @@ class SalesController extends Controller
                     ]);
 
                     $product->decrement('quantity', $item['quantity']);
+                    $itemDetails[] = $product->name . ' (qty: ' . $item['quantity'] . ')';
                 }
             }
 
@@ -134,8 +136,19 @@ class SalesController extends Controller
                         'service_ID' => $item['id'],
                         'quantity' => $item['quantity']
                     ]);
+
+                    $service = Service::find($item['id']);
+                    $itemDetails[] = $service->name . ' (qty: ' . $item['quantity'] . ')';
                 }
             }
+
+            // Log sale creation
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Sale Transaction',
+                'descriptions' => 'Created sale #' . $sale->sale_ID . ' for ' . $validated['customer_name'] . ' - Total: ₱' . number_format($validated['total_cost'], 2) . ' - Items: ' . implode(', ', $itemDetails),
+                'timestamp' => now(),
+            ]);
 
             DB::commit();
             \Log::info('Sale transaction committed successfully');

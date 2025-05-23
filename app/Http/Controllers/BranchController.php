@@ -64,7 +64,6 @@ class BranchController extends Controller
             'end_period' => 'required|string|in:AM,PM',
         ]);
 
-        // Format times properly
         $startTime = sprintf('%s:%s %s', $request->start_hour, $request->start_minute, $request->start_period);
         $endTime = sprintf('%s:%s %s', $request->end_hour, $request->end_minute, $request->end_period);
 
@@ -77,6 +76,14 @@ class BranchController extends Controller
             'operating_hours_start' => $startTime,
             'operating_hours_end' => $endTime,
             'status' => $request->status ?? 'active',
+        ]);
+
+        // Log branch creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Branch Creation',
+            'descriptions' => 'Created new branch: ' . $request->branch_name . ' at ' . $request->address,
+            'timestamp' => now(),
         ]);
 
         return redirect()->route('branches.index')->with('success', 'Branch added successfully!');
@@ -100,11 +107,23 @@ class BranchController extends Controller
             'status' => 'required|string|in:active,inactive',
         ]);
 
-        // Format times properly
         $startTime = sprintf('%s:%s %s', $request->start_hour, $request->start_minute, $request->start_period);
         $endTime = sprintf('%s:%s %s', $request->end_hour, $request->end_minute, $request->end_period);
 
         $branch = Branch::findOrFail($id);
+
+        // Track changes for logging
+        $changes = [];
+        if ($branch->name != $request->branch_name) {
+            $changes[] = 'name: ' . $branch->name . ' → ' . $request->branch_name;
+        }
+        if ($branch->address != $request->address) {
+            $changes[] = 'address updated';
+        }
+        if ($branch->status != $request->status) {
+            $changes[] = 'status: ' . $branch->status . ' → ' . $request->status;
+        }
+
         $branch->update([
             'name' => $request->branch_name,
             'address' => $request->address,
@@ -116,16 +135,38 @@ class BranchController extends Controller
             'status' => $request->status,
         ]);
 
+        // Log branch update
+        if (!empty($changes)) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Branch Update',
+                'descriptions' => 'Updated branch ' . $request->branch_name . ': ' . implode(', ', $changes),
+                'timestamp' => now(),
+            ]);
+        }
+
         return redirect()->route('branches.index')->with('success', 'Branch updated successfully!');
     }
 
+
     // Delete branch
     public function destroy($id)
-    {
-        $branch = Branch::findOrFail($id);
-        $branch->delete();
+{
+    $branch = Branch::findOrFail($id);
+    
+    // Store branch details before deletion
+    $branchInfo = $branch->name . ' (' . $branch->address . ')';
+    
+    $branch->delete();
 
-        // Force a complete refresh
-        return redirect()->route('branches.index')->with('success', 'Branch deleted successfully!');
-    }
+    // Log branch deletion
+    \App\Models\Log::create([
+        'account_ID' => auth()->user()->account_ID,
+        'actions' => 'Branch Deletion',
+        'descriptions' => 'Deleted branch: ' . $branchInfo,
+        'timestamp' => now(),
+    ]);
+
+    return redirect()->route('branches.index')->with('success', 'Branch deleted successfully!');
+}
 }
