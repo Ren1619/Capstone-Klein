@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Pelaez Derm Clinic - Your Skin, Hair, and Nail Specialist</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -147,6 +148,7 @@
                     class="text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
                     Contact</a>
 
+
                 <!-- Appointment Dropdown Container -->
                 <div id="appointmentDropdown"
                     class="relative inline-block text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
@@ -159,9 +161,14 @@
                         </svg>
                     </button>
                 </div>
+                <button id="loginButton" onclick="window.location.href='/login'"
+                    class="text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
+                    Login
+                </button>
             </nav>
         </div>
     </header>
+    @include('landing page/modal/visit_feedback')
 
     <!-- Mobile Navigation Menu -->
     <div id="mobile-menu"
@@ -823,7 +830,7 @@
         <div class="flex items-center justify-center min-h-screen px-4">
             <!-- Modal Background Overlay -->
             <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" id="modalOverlay"></div>
-            
+
             <!-- Modal Content -->
             <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto z-10">
                 <!-- Modal Header -->
@@ -831,13 +838,16 @@
                     <h3 class="text-2xl font-bold">
                         <span class="text-[#F91D7C]">Set</span> your preferred schedule
                     </h3>
-                    <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn" onclick="closeAppointmentModalDirect()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn"
+                        onclick="closeAppointmentModalDirect()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                
+
                 <!-- Modal Body -->
                 <div class="p-6">
                     <form id="appointmentForm">
@@ -846,77 +856,60 @@
                                 All fields with <span class="text-red-500">*</span> are required.
                             </p>
                         </div>
-                        
+
                         <!-- Name Fields -->
                         <div class="mb-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <input 
-                                        type="text" 
-                                        id="firstName" 
-                                        name="firstName" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
-                                        placeholder="First Name*" 
-                                        required>
+                                    <input type="text" id="firstName" name="firstName"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                                        placeholder="First Name*" required>
                                 </div>
                                 <div>
-                                    <input 
-                                        type="text" 
-                                        id="lastName" 
-                                        name="lastName" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
-                                        placeholder="Last Name*" 
-                                        required>
+                                    <input type="text" id="lastName" name="lastName"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                                        placeholder="Last Name*" required>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Contact Fields -->
                         <div class="mb-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <input 
-                                        type="tel" 
-                                        id="phoneNumber" 
-                                        name="phoneNumber" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
-                                        placeholder="Phone Number*" 
-                                        required>
+                                    <input type="tel" id="phoneNumber" name="phoneNumber"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
+                                        placeholder="Phone Number*" required>
                                 </div>
                                 <div>
-                                    <input 
-                                        type="email" 
-                                        id="email" 
-                                        name="email" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                                    <input type="email" id="email" name="email"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                         placeholder="Email">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Date and Time -->
                         <div class="mb-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
-                                        <input 
-                                            type="date" 
-                                            id="appointmentDate" 
-                                            name="appointmentDate" 
-                                            class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                                        <input type="date" id="appointmentDate" name="appointmentDate"
+                                            class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                             required>
                                     </div>
                                 </div>
                                 <div>
-                                    <select 
-                                        id="preferredTime" 
-                                        name="preferredTime" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                                    <select id="preferredTime" name="preferredTime"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                         required>
                                         <option value="" disabled selected>Preferred Time</option>
                                         <option value="9:00 AM">9:00 AM</option>
@@ -930,28 +923,19 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Branch and Type -->
                         <div class="mb-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <select 
-                                        id="preferredBranch" 
-                                        name="preferredBranch" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                                    <select id="preferredBranch" name="preferredBranch"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                         required>
-                                        <option value="" disabled selected>Preferred Branch</option>
-                                        <option value="Main Branch">Main Branch</option>
-                                        <option value="North Branch">North Branch</option>
-                                        <option value="East Branch">East Branch</option>
-                                        <option value="South Branch">South Branch</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <select 
-                                        id="appointmentType" 
-                                        name="appointmentType" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                                    <select id="appointmentType" name="appointmentType"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                         required>
                                         <option value="" disabled selected>Appointment Type</option>
                                         <option value="Consultation">Consultation</option>
@@ -960,23 +944,22 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Concerns -->
                         <div class="mb-4">
-                            <textarea 
-                                id="concerns" 
-                                name="concerns" 
-                                rows="4" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent" 
+                            <textarea id="concerns" name="concerns" rows="4"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                 placeholder="Concerns"></textarea>
                         </div>
-                        
+
                         <!-- Button Actions -->
                         <div class="grid grid-cols-2 gap-4">
-                            <button type="submit" class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
+                            <button type="submit"
+                                class="w-full py-3 bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
                                 Confirm
                             </button>
-                            <button type="button" id="cancelBtn" onclick="closeAppointmentModalDirect()" class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
+                            <button type="button" id="cancelBtn" onclick="closeAppointmentModalDirect()"
+                                class="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
                                 Cancel
                             </button>
                         </div>
@@ -991,7 +974,7 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnmvKg4JauGAuTL3MbPVSa0X4t_NJ5Nbc&libraries=places&callback=initMap">
-    </script>
+        </script>
 
     <script>
         // Open and close modal functions
@@ -1015,6 +998,24 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             console.log('DOM loaded - setting up mobile menu');
+
+            fetch('/api/branches')  // Changed from '/branches' to '/api/branches'
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const branchSelect = document.getElementById('preferredBranch');
+                        if (branchSelect) {
+                            branchSelect.innerHTML = '<option value="" disabled selected>Select Branch</option>';
+                            data.data.forEach(branch => {
+                                const option = document.createElement('option');
+                                option.value = branch.branch_ID;
+                                option.textContent = branch.name; // Changed from branch_name to name
+                                branchSelect.appendChild(option);
+                            });
+                        }
+                    }
+                })
+                .catch(error => console.error('Error loading branches:', error));
 
             // Get references to DOM elements
             const menuToggle = document.getElementById('menu-toggle');
@@ -1385,7 +1386,7 @@
 
             // Setup appointment buttons
             console.log('Landing page: Initializing appointment buttons');
-            
+
             // Define the IDs we want to target
             const appointmentButtonIds = [
                 'addAppointmentBtn',         // Main button ID from dashboard (if present)
@@ -1394,20 +1395,51 @@
                 'mobileAppointmentBtn',      // Mobile menu button
                 'dropdownAppointmentBtn'     // Dropdown menu button
             ];
-            
+
             // Add click handler to each button by ID
             appointmentButtonIds.forEach(id => {
                 const button = document.getElementById(id);
-                
+
                 if (button) {
                     console.log(`Landing page: Found button with ID ${id}`);
-                    
-                    button.addEventListener('click', function(e) {
+
+                    button.addEventListener('click', function (e) {
                         e.preventDefault();
                         console.log(`Button ${id} clicked`);
                         openAppointmentModalDirect();
                     });
                 }
+            });
+        });
+
+
+    </script>
+    <script>
+        // Direct handler for feedback buttons
+        document.addEventListener('DOMContentLoaded', function () {
+            // Handle feedback buttons specifically
+            const feedbackButtons = document.querySelectorAll('.visitFeedbackBtn');
+            console.log('Landing page found feedback buttons:', feedbackButtons.length);
+
+            feedbackButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Feedback button clicked from landing page');
+
+                    // Try both methods to open the modal
+                    if (window.visitFeedbackFunctions && window.visitFeedbackFunctions.open) {
+                        window.visitFeedbackFunctions.open();
+                    } else {
+                        // Fallback method
+                        const modal = document.getElementById('visitFeedbackModal');
+                        if (modal) {
+                            modal.classList.remove('hidden');
+                            document.body.style.overflow = 'hidden';
+                        } else {
+                            console.error('Visit feedback modal not found');
+                        }
+                    }
+                });
             });
         });
     </script>

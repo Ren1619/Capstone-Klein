@@ -3,7 +3,7 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-normal">Sales History</h3>
-            <button id="exportSalesBtn" class="text-[#F91D7C] z-10 flex items-center">
+            <button id="exportSalesBtn" class="text-[#F91D7C] z-10 flex items-center hover:text-[#D91A60]">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -77,86 +77,15 @@
                                         style="width: 20%;">Total Amount</th>
                                 </tr>
                             </thead>
-                            <tbody class="sales-data">
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123987</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">01:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Earl Francis M. Amoy</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 300,000.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123986</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">12:09 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Klein M. Allen</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 3,920.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123985</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">10:45 am</td>
-                                    <td class="py-3 text-black text-base font-normal">Van Kendrick O. Caseres</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 8,750.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123984</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">4:30 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Melbert A. Buligan</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 12,450.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123983</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">3:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Ralph C. Jumao-as</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 5,680.00</td>
-                                </tr>
+                            <tbody class="sales-data" id="valencia-sales-data">
+                                <!-- Sales data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Mobile View -->
-                    <div class="md:hidden">
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123987</p>
-                                    <p class="text-neutral-500">4/7/2025 - 01:15 pm</p>
-                                    <p>Earl Francis M. Amoy</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 300,000.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Additional mobile invoice entries -->
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123986</p>
-                                    <p class="text-neutral-500">4/7/2025 - 12:09 pm</p>
-                                    <p>Klein M. Allen</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 3,920.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- More mobile entries (abbreviated for clarity) -->
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123985</p>
-                                    <p class="text-neutral-500">4/7/2025 - 10:45 am</p>
-                                    <p>Van Kendrick O. Caseres</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 8,750.00</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="md:hidden" id="valencia-mobile-data">
+                        <!-- Mobile sales data will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -164,7 +93,7 @@
             <!-- Malaybalay Branch Content -->
             <div id="malaybalay-content" class="branch-content hidden">
                 <div class="px-3 mb-6">
-                    <!-- Desktop View Table - Structured the same as Valencia for consistency -->
+                    <!-- Desktop View Table -->
                     <div class="hidden md:block overflow-x-auto">
                         <table class="w-full min-w-full table-auto">
                             <thead>
@@ -181,108 +110,15 @@
                                         style="width: 20%;">Total Amount</th>
                                 </tr>
                             </thead>
-                            <tbody class="sales-data">
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123987</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">01:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Earl Francis M. Amoy</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 300,000.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123986</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">12:09 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Klein M. Allen</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 3,920.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123985</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">10:45 am</td>
-                                    <td class="py-3 text-black text-base font-normal">Van Kendrick O. Caseres</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 8,750.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123984</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">4:30 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Melbert A. Buligan</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 12,450.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123983</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">3:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Ralph C. Jumao-as</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 5,680.00</td>
-                                </tr>
+                            <tbody class="sales-data" id="malaybalay-sales-data">
+                                <!-- Sales data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Mobile View -->
-                    <div class="md:hidden">
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123987</p>
-                                    <p class="text-neutral-500">4/7/2025 - 01:15 pm</p>
-                                    <p>Earl Francis M. Amoy</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 300,000.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123986</p>
-                                    <p class="text-neutral-500">4/7/2025 - 12:09 pm</p>
-                                    <p>Klein M. Allen</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 3,920.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123985</p>
-                                    <p class="text-neutral-500">4/7/2025 - 10:45 am</p>
-                                    <p>Van Kendrick O. Caseres</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 8,750.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123984</p>
-                                    <p class="text-neutral-500">4/6/2025 - 4:30 pm</p>
-                                    <p>Melbert A. Buligan</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 12,450.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123983</p>
-                                    <p class="text-neutral-500">4/6/2025 - 3:15 pm</p>
-                                    <p>Ralph C. Jumao-as</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 5,680.00</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="md:hidden" id="malaybalay-mobile-data">
+                        <!-- Mobile sales data will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -290,7 +126,7 @@
             <!-- Maramag Branch Content -->
             <div id="maramag-content" class="branch-content hidden">
                 <div class="px-3 mb-6">
-                    <!-- Same table structure as other branches -->
+                    <!-- Desktop View Table -->
                     <div class="hidden md:block overflow-x-auto">
                         <table class="w-full min-w-full table-auto">
                             <thead>
@@ -307,164 +143,41 @@
                                         style="width: 20%;">Total Amount</th>
                                 </tr>
                             </thead>
-                            <tbody class="sales-data">
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123987</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">01:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Earl Francis M. Amoy</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 300,000.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123986</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">12:09 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Klein M. Allen</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 3,920.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123985</td>
-                                    <td class="py-3 text-black text-base font-normal">4/7/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">10:45 am</td>
-                                    <td class="py-3 text-black text-base font-normal">Van Kendrick O. Caseres</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 8,750.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123984</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">4:30 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Melbert A. Buligan</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 12,450.00</td>
-                                </tr>
-                                <tr class="border-b border-gray-200 hover:bg-[#F91D7C]/5">
-                                    <td class="py-3 text-black text-base font-normal">123983</td>
-                                    <td class="py-3 text-black text-base font-normal">4/6/2025</td>
-                                    <td class="py-3 text-black text-base font-normal">3:15 pm</td>
-                                    <td class="py-3 text-black text-base font-normal">Ralph C. Jumao-as</td>
-                                    <td class="py-3 text-black text-base font-normal text-right">₱ 5,680.00</td>
-                                </tr>
+                            <tbody class="sales-data" id="maramag-sales-data">
+                                <!-- Sales data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Mobile View -->
-                    <div class="md:hidden">
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123987</p>
-                                    <p class="text-neutral-500">4/7/2025 - 01:15 pm</p>
-                                    <p>Earl Francis M. Amoy</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 300,000.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123986</p>
-                                    <p class="text-neutral-500">4/7/2025 - 12:09 pm</p>
-                                    <p>Klein M. Allen</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 3,920.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123985</p>
-                                    <p class="text-neutral-500">4/7/2025 - 10:45 am</p>
-                                    <p>Van Kendrick O. Caseres</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 8,750.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123984</p>
-                                    <p class="text-neutral-500">4/6/2025 - 4:30 pm</p>
-                                    <p>Melbert A. Buligan</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 12,450.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5">
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">
-                                    <p class="font-medium">Invoice No. 123983</p>
-                                    <p class="text-neutral-500">4/6/2025 - 3:15 pm</p>
-                                    <p>Ralph C. Jumao-as</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-medium">₱ 5,680.00</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="md:hidden" id="maramag-mobile-data">
+                        <!-- Mobile sales data will be loaded here -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pagination Section - Now included inside branch tab content -->
+        <!-- Pagination Section -->
         <div id="pagination-controls" class="w-full flex flex-col sm:flex-row justify-between items-center mt-5">
-            <div class="text-sm text-gray-600 mb-3 sm:mb-0">Showing 1 to 5 of 9 results</div>
-            <div class="flex space-x-1">
-                <button class="px-3 py-1 text-sm border border-gray-200 rounded text-gray-500">Previous</button>
-                <button
-                    class="w-8 h-8 flex items-center justify-center bg-[#F91D7C] text-white rounded text-sm">1</button>
-                <button
-                    class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-sm">2</button>
-                <button
-                    class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-sm">3</button>
-                <button class="px-3 py-1 text-sm border border-gray-200 rounded text-gray-500">Next</button>
+            <div class="text-sm text-gray-600 mb-3 sm:mb-0" id="pagination-info">Showing 0 to 0 of 0 results</div>
+            <div class="flex space-x-1" id="pagination-buttons">
+                <!-- Pagination buttons will be generated here -->
             </div>
         </div>
     </div>
 
-    <!-- Combined Overall Sales Reports -->
-    <div class="mb-8">
-        <!-- <h2 class="text-xl font-semibold text-black mb-4">Overall Sales Reports</h2>
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold text-black">Overall Sales Reports</h2>
-        </div> -->
-
-        <!-- Side-by-side reports -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Daily Report -->
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-lg font-normal mb-3">Daily Report</h3>
-                <div class="h-56">
-                    <canvas class="daily-chart"></canvas>
-                </div>
-            </div>
-
-            <!-- Weekly Report -->
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-lg font-normal mb-3">Weekly Report</h3>
-                <div class="h-56">
-                    <canvas class="weekly-chart"></canvas>
-                </div>
-            </div>
-
-            <!-- Monthly Report -->
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="text-lg font-normal mb-3">Monthly Report</h3>
-                <div class="h-56">
-                    <canvas class="monthly-chart"></canvas>
-                </div>
-            </div>
+    <!-- No Data Message -->
+    <div id="no-data-message" class="bg-white p-8 rounded-lg shadow text-center hidden">
+        <div class="text-gray-400 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
         </div>
+        <h3 class="text-xl font-medium text-gray-900 mb-2">No Sales Data</h3>
+        <p class="text-gray-600">No sales records found for the selected branch.</p>
     </div>
-
 </div>
 
 <style>
@@ -480,6 +193,16 @@
     .branch-tab.active button {
         color: #F91D7C;
     }
+
+    .loading-row {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .loading-cell {
+        background-color: #f3f4f6;
+        height: 20px;
+        border-radius: 4px;
+    }
 </style>
 
 <script>
@@ -491,49 +214,40 @@
         const tabsContainer = document.getElementById('branch-tabs');
         const scrollLeftBtn = document.getElementById('scroll-left');
         const scrollRightBtn = document.getElementById('scroll-right');
+        const exportBtn = document.getElementById('exportSalesBtn');
+
+        // Current state
+        let currentBranch = 'valencia';
+        let currentPage = 1;
+        let totalPages = 1;
+        let salesData = {};
 
         // Initialize tabs functionality
         initBranchTabs();
-
-        // Initialize horizontal scrolling
         initScrollNavigation();
 
-        // Handle pagination visibility - now showing for all branches
-        function togglePagination(branchId) {
-            // Show pagination for all branches including Maramag
-            paginationControls.classList.remove('hidden');
-        }
+        // Load initial data
+        loadBranchSales(currentBranch, currentPage);
+
+        // Export functionality
+        exportBtn.addEventListener('click', exportSales);
 
         function initBranchTabs() {
-            // Set initial tab state
-            const initialTab = branchTabs[0];
-            const initialBranchId = initialTab.getAttribute('data-branch');
-            togglePagination(initialBranchId);
-
-            // Add click handlers to all tabs
             branchTabs.forEach(tab => {
                 tab.addEventListener('click', function () {
                     // Remove active state from all tabs
                     branchTabs.forEach(t => {
                         t.classList.remove('active');
-
-                        // Remove text color
                         const button = t.querySelector('button');
                         if (button) button.classList.remove('text-[#F91D7C]');
-
-                        // Remove indicator
                         const indicator = t.querySelector('div.absolute');
                         if (indicator) indicator.remove();
                     });
 
                     // Add active state to clicked tab
                     this.classList.add('active');
-
-                    // Add colored text
                     const button = this.querySelector('button');
                     if (button) button.classList.add('text-[#F91D7C]');
-
-                    // Add indicator line
                     const indicator = document.createElement('div');
                     indicator.className = 'absolute bottom-0 left-0 w-full h-0.5 bg-[#F91D7C]';
                     this.appendChild(indicator);
@@ -547,8 +261,10 @@
                     const selectedContent = document.getElementById(`${branchId}-content`);
                     if (selectedContent) selectedContent.classList.remove('hidden');
 
-                    // Toggle pagination based on selected branch
-                    togglePagination(branchId);
+                    // Update current branch and load data
+                    currentBranch = branchId;
+                    currentPage = 1;
+                    loadBranchSales(currentBranch, currentPage);
 
                     // Ensure the tab is visible in the scroll area
                     scrollTabIntoView(this);
@@ -557,7 +273,6 @@
         }
 
         function initScrollNavigation() {
-            // Check if scrolling is needed
             function checkScroll() {
                 const hasOverflow = tabsContainer.scrollWidth > tabsContainer.clientWidth;
                 const atStart = tabsContainer.scrollLeft <= 0;
@@ -567,15 +282,11 @@
                 scrollRightBtn.classList.toggle('hidden', atEnd || !hasOverflow);
             }
 
-            // Scroll handling
             scrollLeftBtn.addEventListener('click', () => tabsContainer.scrollBy({ left: -100, behavior: 'smooth' }));
             scrollRightBtn.addEventListener('click', () => tabsContainer.scrollBy({ left: 100, behavior: 'smooth' }));
 
-            // Monitor scrolling
             tabsContainer.addEventListener('scroll', checkScroll);
             window.addEventListener('resize', checkScroll);
-
-            // Initial check
             checkScroll();
         }
 
@@ -586,32 +297,207 @@
             const containerScrollLeft = tabsContainer.scrollLeft;
 
             if (tabLeft < containerScrollLeft) {
-                // Tab is to the left of the visible area
                 tabsContainer.scrollTo({ left: tabLeft, behavior: 'smooth' });
             } else if (tabLeft + tabWidth > containerScrollLeft + containerWidth) {
-                // Tab is to the right of the visible area
                 tabsContainer.scrollTo({ left: tabLeft + tabWidth - containerWidth, behavior: 'smooth' });
             }
         }
 
-        // Initialize charts (placeholder for actual chart initialization)
-        document.querySelectorAll('.branch-chart').forEach(chart => {
-            const type = chart.getAttribute('data-type');
-            // Placeholder for actual chart initialization
-            console.log(`Initialize ${type} chart`);
-        });
+        // Load branch sales data
+        async function loadBranchSales(branch, page = 1) {
+            if (window.showLoading) window.showLoading();
 
-        // Event delegation for invoice entries
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.invoice-entry')) {
-                console.log('Invoice clicked');
-                // Handle invoice click
+            try {
+                const response = await fetch(`/api/sales?branch=${branch}&page=${page}`);
+                const data = await response.json();
+
+                salesData[branch] = data.data;
+                updateSalesDisplay(branch, data);
+                updatePagination(data);
+
+                // Hide no data message if we have data
+                document.getElementById('no-data-message').classList.add('hidden');
+                paginationControls.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading branch sales:', error);
+                showNoDataMessage();
+            } finally {
+                if (window.hideLoading) window.hideLoading();
+            }
+        }
+
+        // Update sales display
+        function updateSalesDisplay(branch, responseData) {
+            const salesDataElement = document.getElementById(`${branch}-sales-data`);
+            const mobileDataElement = document.getElementById(`${branch}-mobile-data`);
+            const sales = responseData.data;
+
+            if (!sales || sales.length === 0) {
+                showNoDataMessage();
+                return;
             }
 
-            if (e.target.closest('#exportSalesBtn')) {
-                console.log('Export clicked');
-                // Handle export button click
+            // Clear existing data
+            salesDataElement.innerHTML = '';
+            mobileDataElement.innerHTML = '';
+
+            // Populate desktop table
+            sales.forEach(sale => {
+                const row = createDesktopSaleRow(sale);
+                salesDataElement.appendChild(row);
+            });
+
+            // Populate mobile cards
+            sales.forEach(sale => {
+                const card = createMobileSaleCard(sale);
+                mobileDataElement.appendChild(card);
+            });
+        }
+
+        // Create desktop table row
+        function createDesktopSaleRow(sale) {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-200 hover:bg-[#F91D7C]/5 cursor-pointer';
+            row.onclick = () => viewSaleDetails(sale.sale_ID);
+
+            const date = new Date(sale.date);
+            const time = new Date(sale.created_at);
+
+            row.innerHTML = `
+                <td class="py-3 text-black text-base font-normal">${sale.sale_ID}</td>
+                <td class="py-3 text-black text-base font-normal">${date.toLocaleDateString()}</td>
+                <td class="py-3 text-black text-base font-normal">${time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                <td class="py-3 text-black text-base font-normal">${sale.customer_name}</td>
+                <td class="py-3 text-black text-base font-normal text-right">${window.formatCurrency ? window.formatCurrency(sale.total_cost) : '₱' + parseFloat(sale.total_cost).toLocaleString()}</td>
+            `;
+
+            return row;
+        }
+
+        // Create mobile card
+        function createMobileSaleCard(sale) {
+            const card = document.createElement('div');
+            card.className = 'invoice-entry border-b border-gray-200 py-3 hover:bg-[#F91D7C]/5 cursor-pointer';
+            card.onclick = () => viewSaleDetails(sale.sale_ID);
+
+            const date = new Date(sale.date);
+            const time = new Date(sale.created_at);
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div class="text-sm">
+                        <p class="font-medium">Invoice No. ${sale.sale_ID}</p>
+                        <p class="text-neutral-500">${date.toLocaleDateString()} - ${time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p>${sale.customer_name}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium">${window.formatCurrency ? window.formatCurrency(sale.total_cost) : '₱' + parseFloat(sale.total_cost).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Update pagination
+        function updatePagination(data) {
+            const { current_page, last_page, from, to, total } = data;
+
+            totalPages = last_page;
+            currentPage = current_page;
+
+            // Update pagination info
+            document.getElementById('pagination-info').textContent =
+                `Showing ${from || 0} to ${to || 0} of ${total} results`;
+
+            // Generate pagination buttons
+            const paginationButtons = document.getElementById('pagination-buttons');
+            paginationButtons.innerHTML = '';
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-3 py-1 text-sm border border-gray-200 rounded text-gray-500 ${current_page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`;
+            prevBtn.textContent = 'Previous';
+            prevBtn.disabled = current_page === 1;
+            prevBtn.onclick = () => {
+                if (current_page > 1) {
+                    loadBranchSales(currentBranch, current_page - 1);
+                }
+            };
+            paginationButtons.appendChild(prevBtn);
+
+            // Page number buttons
+            const startPage = Math.max(1, current_page - 2);
+            const endPage = Math.min(last_page, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `w-8 h-8 flex items-center justify-center text-sm rounded ${i === current_page
+                        ? 'bg-[#F91D7C] text-white'
+                        : 'border border-gray-200 hover:bg-gray-50'
+                    }`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => loadBranchSales(currentBranch, i);
+                paginationButtons.appendChild(pageBtn);
             }
-        });
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-3 py-1 text-sm border border-gray-200 rounded text-gray-500 ${current_page === last_page ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`;
+            nextBtn.textContent = 'Next';
+            nextBtn.disabled = current_page === last_page;
+            nextBtn.onclick = () => {
+                if (current_page < last_page) {
+                    loadBranchSales(currentBranch, current_page + 1);
+                }
+            };
+            paginationButtons.appendChild(nextBtn);
+        }
+
+        // Show no data message
+        function showNoDataMessage() {
+            document.getElementById('no-data-message').classList.remove('hidden');
+            paginationControls.classList.add('hidden');
+
+            // Clear existing data in all tables
+            ['valencia', 'malaybalay', 'maramag'].forEach(branch => {
+                document.getElementById(`${branch}-sales-data`).innerHTML = '';
+                document.getElementById(`${branch}-mobile-data`).innerHTML = '';
+            });
+        }
+
+        // View sale details
+        function viewSaleDetails(saleId) {
+            // Implement sale details view - could open a modal or navigate to details page
+            console.log('View sale details for:', saleId);
+            // You can implement this based on your requirements
+            // For example: window.location.href = `/sales/${saleId}`;
+        }
+
+        // Export sales data
+        async function exportSales() {
+            try {
+                const params = new URLSearchParams({
+                    branch: currentBranch,
+                    format: 'csv'
+                });
+
+                // Create a temporary link to download the file
+                const link = document.createElement('a');
+                link.href = `/api/sales/export?${params.toString()}`;
+                link.download = `${currentBranch}-sales-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Error exporting sales:', error);
+                alert('Failed to export sales data. Please try again.');
+            }
+        }
+
+        // Make functions globally available if needed
+        window.loadBranchSales = loadBranchSales;
+        window.viewSaleDetails = viewSaleDetails;
     });
 </script>

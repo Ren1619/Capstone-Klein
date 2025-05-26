@@ -1,6 +1,3 @@
-{{-- components/staff-details-modal.blade.php --}}
-
-<!-- Staff Details Modal -->
 <div id="staffDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <!-- Light overlay -->
     <div class="fixed inset-0 bg-black bg-opacity-10 transition-opacity" id="detailsModalOverlay"></div>

@@ -52,7 +52,8 @@ class AppointmentController extends Controller
     }
     /**
      * Filter appointments by status and type.
-     */    public function filter(Request $request)
+     */
+    public function filter(Request $request)
     {
         $status = $request->input('status');
         $type = $request->input('type');
@@ -141,6 +142,14 @@ class AppointmentController extends Controller
             'status' => 'pending'
         ]);
 
+        // Log appointment creation
+        \App\Models\Log::create([
+            'account_ID' => auth()->user()->account_ID,
+            'actions' => 'Appointment Creation',
+            'descriptions' => 'Created appointment for ' . $request->first_name . ' ' . $request->last_name . ' on ' . $request->date . ' at ' . $request->time . ' (' . $request->appointment_type . ')',
+            'timestamp' => now(),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Appointment created successfully',
@@ -153,7 +162,8 @@ class AppointmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
-     */    public function updateStatus(Request $request, $id)
+     */
+    public function updateStatus(Request $request, $id)
     {
         Log::info('Updating appointment status', [
             'appointment_id' => $id,
@@ -166,9 +176,8 @@ class AppointmentController extends Controller
             ]);
 
             $appointment = Appointment::findOrFail($id);
-            $oldStatus = $appointment->status;  // Store the old status before changing
+            $oldStatus = $appointment->status;
 
-            // Additional validation for status transitions
             if ($request->status === 'upcoming') {
                 $appointmentDate = Carbon::parse($appointment->date);
                 if ($appointmentDate->isToday()) {
@@ -182,6 +191,14 @@ class AppointmentController extends Controller
             $appointment->status = $request->status;
             $appointment->save();
 
+            // Log appointment status change
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Appointment Status Update',
+                'descriptions' => 'Changed appointment status for ' . $appointment->first_name . ' ' . $appointment->last_name . ' from ' . $oldStatus . ' to ' . $request->status,
+                'timestamp' => now(),
+            ]);
+
             Log::info('Status updated successfully', [
                 'appointment_id' => $id,
                 'old_status' => $oldStatus,
@@ -194,7 +211,6 @@ class AppointmentController extends Controller
                 'appointment' => $appointment
             ]);
         } catch (\Exception $e) {
-
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating status: ' . $e->getMessage()
@@ -248,5 +264,57 @@ class AppointmentController extends Controller
             'completedCount' => $completedCount,
             'cancelledCount' => $cancelledCount
         ]);
+    }
+    /**
+     * Get completed appointments eligible for feedback
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCompletedWithoutFeedback()
+    {
+        $appointments = Appointment::where('status', 'completed')
+            ->whereDoesntHave('feedback')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'appointments' => $appointments
+        ]);
+    }
+
+    /**
+     * Check if an appointment is eligible for feedback.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkFeedbackEligibility($id)
+    {
+        try {
+            $appointment = Appointment::findOrFail($id);
+
+            if ($appointment->status !== 'completed') {
+                return response()->json([
+                    'eligible' => false,
+                    'message' => 'Only completed appointments can receive feedback.'
+                ]);
+            }
+
+            if ($appointment->feedback) {
+                return response()->json([
+                    'eligible' => false,
+                    'message' => 'Feedback has already been submitted for this appointment.'
+                ]);
+            }
+
+            return response()->json([
+                'eligible' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'eligible' => false,
+                'message' => 'Error checking eligibility: ' . $e->getMessage()
+            ], 422);
+        }
     }
 }

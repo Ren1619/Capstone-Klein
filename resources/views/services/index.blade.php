@@ -33,9 +33,9 @@
             </div>
 
             @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                <span class="block sm:inline">{{ session('success') }}</span>
-            </div>
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
             @endif
 
             <!-- Services Table -->
@@ -61,7 +61,8 @@
                                         <div class="flex items-center gap-3.5">
                                             <div
                                                 class="w-12 h-12 bg-gray-200 rounded border border-gray-200 flex items-center justify-center">
-                                                <img class="w-10 h-10 object-contain" src="{{ asset('images/service-placeholder.png') }}"
+                                                <img class="w-10 h-10 object-contain"
+                                                    src="{{ asset('images/service-placeholder.png') }}"
                                                     alt="{{ $service->name }}" />
                                             </div>
                                             <span class="text-black text-base">{{ $service->name }}</span>
@@ -70,17 +71,20 @@
                                     <td class="py-4 text-black text-base">{{ $service->category->category_name }}</td>
                                     <td class="py-4 text-black text-base">₱ {{ number_format($service->price, 2) }}</td>
                                     <td class="py-4 text-center">
-                                        <span class="inline-block px-3 py-2 rounded text-sm {{ $service->status == 'active' ? 'bg-green-500/30 text-green-600' : 'bg-red-700/30 text-red-700' }}">
+                                        <span
+                                            class="inline-block px-3 py-2 rounded text-sm {{ $service->status == 'active' ? 'bg-green-500/30 text-green-600' : 'bg-red-700/30 text-red-700' }}">
                                             {{ $service->status }}
                                         </span>
                                     </td>
                                     <td class="py-4">
                                         <div class="flex items-center gap-3.5">
-                                            <button type="button" onclick="editService('{{ $service->service_ID }}')"
+                                            <button type="button" onclick="openEditServiceModal({{ $service->service_ID }})"
                                                 class="text-green-600 hover:text-green-700">
                                                 <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit Icon">
                                             </button>
-                                            <form action="{{ route('services.destroy', $service->service_ID) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this service?');">
+                                            <form action="{{ route('services.destroy', $service->service_ID) }}" method="POST"
+                                                class="inline"
+                                                onsubmit="return confirm('Are you sure you want to delete this service?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-700">
@@ -102,7 +106,8 @@
                 <!-- Pagination -->
                 <div class="px-7 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
                     <div class="text-black text-sm">
-                        Showing {{ $services->firstItem() ?? 0 }} to {{ $services->lastItem() ?? 0 }} of {{ $services->total() ?? 0 }} results
+                        Showing {{ $services->firstItem() ?? 0 }} to {{ $services->lastItem() ?? 0 }} of
+                        {{ $services->total() ?? 0 }} results
                     </div>
                     <div class="flex items-center gap-2.5 mt-2 sm:mt-0">
                         {{ $services->links() }}
@@ -114,6 +119,9 @@
 
     @include('services.modals.add-modal')
     @include('services.modals.addServiceCategory')
+    @include('services.modals.edit-services-modal')
+
+    {{-- Include JavaScript for modals --}}
 
 
     {{-- JavaScript for handling service actions --}}

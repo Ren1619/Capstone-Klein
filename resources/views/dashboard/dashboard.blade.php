@@ -25,7 +25,7 @@
                     <!-- Add Clinic Button -->
                     <button id="openModalBtn"
                         class="bg-white rounded-lg p-3.5 flex items-center gap-3.5 hover:bg-[#F91D7C]/10 shadow-sm cursor-pointer transition-colors w-full"
-                        onclick="openClinicModalDirect()">
+                        onclick="openBranchModalDirect()">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-[#F91D7C]/30 rounded flex justify-center items-center">
                             <div class="w-6 h-6">
                                 <img class="w-full h-full object-cover" src="{{ asset('icons/add_clinic_icon.svg') }}"
@@ -89,7 +89,7 @@
                     <!-- Add Services Button -->
                     <button id="addServiceBtn"
                         class="bg-white rounded-lg p-3.5 flex items-center gap-3.5 hover:bg-[#F91D7C]/10 shadow-sm cursor-pointer transition-colors w-full"
-                        onclick="openServiceModalDirect()">
+                        onclick="openServiceModal()">
                         <div class="w-8 h-8 md:w-10 md:h-10 bg-[#F91D7C]/30 rounded flex justify-center items-center">
                             <div class="w-6 h-6">
                                 <img class="w-full h-full object-cover" src="{{ asset('icons/add_services_icon.svg') }}"

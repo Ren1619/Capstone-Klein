@@ -12,7 +12,7 @@
           <span id="modalAction" class="text-[#F91D7C]">Add</span> Product
         </h3>
         <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn"
-          onclick="closeAllModals()">
+          onclick="closeProductModalDirect()">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -143,7 +143,7 @@
               class="w-36 h-10 flex items-center justify-center bg-[#F91D7C] hover:bg-[#e01a70] text-white font-medium rounded-md transition-colors">
               Add
             </button>
-            <button type="button" id="cancelBtn" onclick="closeAllModals()"
+            <button type="button" id="cancelBtn" onclick="closeProductModalDirect()"
               class="w-36 h-10 flex items-center justify-center bg-black hover:bg-gray-800 text-white font-medium rounded-md transition-colors">
               Cancel
             </button>
@@ -157,7 +157,6 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     console.log('Initializing product modal');
-
 
     // DOM Elements
     const modal = document.getElementById('productModal');
@@ -407,6 +406,11 @@
     };
 
     window.closeProductModalDirect = function () {
+      closeModal();
+    };
+
+    // Define closeAllModals as an alias to closeProductModalDirect for backward compatibility
+    window.closeAllModals = function () {
       closeModal();
     };
 
