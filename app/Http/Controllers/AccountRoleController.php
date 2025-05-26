@@ -29,7 +29,7 @@ class AccountRoleController extends Controller
         $validator = Validator::make($request->all(), [
             'role_name' => 'required|string|max:255|unique:accounts_role,role_name',
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',

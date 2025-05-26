@@ -71,15 +71,20 @@
                 </div>
 
                 <!-- Logout at bottom -->
+
                 <div class="mt-auto mb-4">
-                    <a href={{ url('/login') }} class="p-3.5 flex items-center gap-3.5 hover:bg-pink-600/10">
-                        <div class="w-6 h-6 relative">
-                            <div class="w-6 h-6">
-                                <img src="{{ asset('icons/logout_icon.svg') }}" alt="Log out">
+                    <form action="{{ route('logout') }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit"
+                            class="w-full p-3.5 flex items-center gap-3.5 hover:bg-pink-600/10 text-left focus:outline-none">
+                            <div class="w-6 h-6 relative">
+                                <div class="w-6 h-6">
+                                    <img src="{{ asset('icons/logout_icon.svg') }}" alt="Log out">
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-black text-sm font-normal leading-none">Log out</div>
-                    </a>
+                            <div class="text-black text-sm font-normal leading-none">Log out</div>
+                        </button>
+                    </form>
                 </div>
             </div>
 

@@ -12,14 +12,44 @@ class AccountController extends Controller
     /**
      * Display a list of accounts.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $accounts = Account::with(['role', 'branch'])->paginate(10);
+        try {
+            $query = Account::query();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $accounts,
-        ]);
+            // Always load relationships
+            $query->with(['role', 'branch']);
+
+            // Filter by role if provided
+            if ($request->has('role')) {
+                if ($request->role === 'staff') {
+                    // Get IDs of staff roles (any role with 'staff' in the name)
+                    $staffRoleIds = \App\Models\AccountRole::where('role_name', 'LIKE', '%staff%')
+                        ->pluck('role_ID');
+
+                    // Filter accounts by these role IDs
+                    if ($staffRoleIds->count() > 0) {
+                        $query->whereIn('role_ID', $staffRoleIds);
+                    }
+                }
+            }
+
+            // Add pagination
+            $accounts = $query->paginate(10);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $accounts,
+            ]);
+        } catch (\Exception $e) {
+            // Log the error
+            \Illuminate\Support\Facades\Log::error('Account index error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve accounts: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

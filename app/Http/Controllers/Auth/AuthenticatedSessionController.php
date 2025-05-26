@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Mail\TwoFactorCodeMail;
 use App\Models\Log;
+use App\Models\Account;
 use App\Models\VerificationCode;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
-use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -34,23 +35,39 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request)
     {
-        $request->authenticate();
+        try {
+            // Check if account is locked
+            $email = $request->input('email');
+            $account = Account::where('email', $email)->first();
 
-        // Instead of completing the login, store the user ID and redirect to 2FA
-        $user = Auth::user();
-        Auth::logout();
+            if ($account && $account->locked_at) {
+                return back()->withErrors([
+                    'email' => 'This account has been locked due to multiple failed login attempts. Please contact an administrator.'
+                ]);
+            }
 
-        // Store user ID in session
-        Session::put('auth.2fa.user_id', $user->account_ID);
+            // Process authentication
+            $request->authenticate();
 
-        // Generate verification code
-        $verificationCode = VerificationCode::generateFor($user->account_ID);
+            // For 2FA
+            $user = Auth::user();
+            Auth::logout();
 
-        // Send verification code via email
-        $account = \App\Models\Account::find($user->account_ID);
-        Mail::to($user->email)->send(new TwoFactorCodeMail($account, $verificationCode->code));
+            // Store user ID in session
+            Session::put('auth.2fa.user_id', $user->account_ID);
 
-        return redirect()->route('two-factor.show');
+            // Generate verification code
+            $verificationCode = VerificationCode::generateFor($user->account_ID);
+
+            // Send verification code via email
+            $account = \App\Models\Account::find($user->account_ID);
+            Mail::to($user->email)->send(new TwoFactorCodeMail($account, $verificationCode->code));
+
+            return redirect()->route('two-factor.show');
+
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
     }
 
     /**
@@ -64,10 +81,10 @@ class AuthenticatedSessionController extends Controller
         // Log the logout activity
         if (Auth::check()) {
             \App\Models\Log::create([
-                'account_ID' => Auth::user()->account_ID, // Fixed: was Auth::id()
+                'account_ID' => Auth::user()->account_ID,
                 'actions' => 'Logout',
                 'descriptions' => 'User logged out',
-                'timestamp' => now(), // Fixed: was Carbon::now()
+                'timestamp' => now(),
             ]);
         }
 

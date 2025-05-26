@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Account;
+use App\Models\Log;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -12,21 +14,22 @@ use Illuminate\Validation\ValidationException;
 class LoginRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
+     * Maximum number of allowed attempts before locking
      */
-    public function authorize()
+    protected $maxAttempts = 5;
+
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
     {
         return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             'email' => ['required', 'string', 'email'],
@@ -37,33 +40,77 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
-     * @return void
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function authenticate(): void
+    {
+        $this->ensureIsNotRateLimited();
+        $this->checkAccountLock();
+
+        $email = $this->input('email');
+        $account = Account::where('email', $email)->first();
+
+        if (Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            // Authentication passed, reset failed attempts
+            if ($account) {
+                $account->failed_login_attempts = 0;
+                $account->save();
+            }
+
+            RateLimiter::clear($this->throttleKey());
+            return;
+        }
+
+        // Authentication failed, increment counter
+        if ($account) {
+            $account->failed_login_attempts += 1;
+
+            // Check if account should be locked
+            if ($account->failed_login_attempts >= $this->maxAttempts) {
+                $account->locked_at = now();
+
+                // Log account lock
+                Log::create([
+                    'account_ID' => $account->account_ID,
+                    'actions' => 'Account Locked',
+                    'descriptions' => 'Account locked due to ' . $this->maxAttempts . ' failed login attempts',
+                    'timestamp' => now(),
+                ]);
+            }
+
+            $account->save();
+        }
+
+        RateLimiter::hit($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
+    }
+
+    /**
+     * Check if the account is locked.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function authenticate()
+    protected function checkAccountLock(): void
     {
-        $this->ensureIsNotRateLimited();
+        $email = $this->input('email');
+        $account = Account::where('email', $email)->first();
 
-        if (!Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
-
+        if ($account && $account->locked_at) {
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'This account has been locked due to multiple failed login attempts. Please contact an administrator.',
             ]);
         }
-
-        RateLimiter::clear($this->throttleKey());
     }
 
     /**
      * Ensure the login request is not rate limited.
      *
-     * @return void
-     *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function ensureIsNotRateLimited()
+    public function ensureIsNotRateLimited(): void
     {
         if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
@@ -83,10 +130,8 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the rate limiting throttle key for the request.
-     *
-     * @return string
      */
-    public function throttleKey()
+    public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
     }

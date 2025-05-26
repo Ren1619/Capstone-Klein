@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\AccountRoleController;
 use App\Models\AccountRole;
 use App\Models\Account;
 use App\Http\Controllers\ProfileController;
@@ -84,7 +85,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Password update route
-    Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+    Route::put('update-password', [PasswordController::class, 'update'])->name('password.update');
 
     // Email verification routes (if you're using email verification)
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
@@ -98,6 +99,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/branches/{id}', [BranchController::class, 'update'])->name('branches.update');
     Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
 
+
+    Route::get('/roles', [AccountRoleController::class, 'index'])->name('roles.index');
+
     //INVENTORY ROUTES
     Route::get('/inventory', [ProductController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [ProductController::class, 'store'])->name('inventory.store');
@@ -105,12 +109,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/inventory/{id}', [ProductController::class, 'update'])->name('inventory.update');
     Route::delete('/inventory/{id}', [ProductController::class, 'destroy'])->name('inventory.destroy');
 
-    //SERVICES ROUTES
-    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
-    Route::get('/services/{id}', [ServiceController::class, 'show'])->name('services.show');
-    Route::put('/services/{id}', [ServiceController::class, 'update'])->name('services.update');
-    Route::delete('/services/{id}', [ServiceController::class, 'destroy'])->name('services.destroy');
+    Route::resource('services', ServiceController::class);
 
     // Appointment Routes
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
@@ -150,7 +149,10 @@ Route::middleware('guest')->group(function () {
 
 
 
-
+Route::get('/test-branches', function () {
+    $branches = \App\Models\Branch::all();
+    return response()->json($branches);
+});
 
 // Feedback Routes
 Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
@@ -175,11 +177,7 @@ Route::middleware(['web'])->group(function () {
 Route::get('/api/appointments/{id}/check-feedback-eligibility', [AppointmentController::class, 'checkFeedbackEligibility']);
 Route::get('/api/appointments/completed-without-feedback', [AppointmentController::class, 'getCompletedWithoutFeedback']);
 
-Route::get('/create-admin', function () {
-    // Create Admin role
-    $adminRole = AccountRole::create([
-        'role_name' => 'Admin'
-    ]);
+Route::get('/create-dummy-account', function () {
 
     // Get the first branch
     $branch = DB::table('branches')->first();
@@ -190,17 +188,17 @@ Route::get('/create-admin', function () {
 
     // Create admin account
     $admin = Account::create([
-        'role_ID' => $adminRole->role_ID,
+        'role_ID' => 1,
         'branch_ID' => $branch->branch_ID,
-        'last_name' => 'Admin',
-        'first_name' => 'System',
+        'last_name' => 'System',
+        'first_name' => 'Admin',
         'contact_number' => '09569104353',
         'email' => 'allenklein04@gmail.com',
-        'password' => Hash::make('admin123'),
+        'password' => Hash::make('00000000'),
     ]);
 
     return "Admin account created successfully!<br>
-            Email: allenklein04@gmail.com<br>
-            Password: admin123<br>
+            Email: allenlalay04@gmail.com<br>
+            Password: 00000000<br>
             <strong>IMPORTANT: Delete this route and change this password after login!</strong>";
 });

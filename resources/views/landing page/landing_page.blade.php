@@ -148,6 +148,7 @@
                     class="text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
                     Contact</a>
 
+
                 <!-- Appointment Dropdown Container -->
                 <div id="appointmentDropdown"
                     class="relative inline-block text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
@@ -160,6 +161,10 @@
                         </svg>
                     </button>
                 </div>
+                <button id="loginButton" onclick="window.location.href='/login'"
+                    class="text-black text-base font-normal leading-tight hover:text-[#FF006E] hover:font-medium transition-all border-b-2 border-transparent hover:border-[#FF006E]">
+                    Login
+                </button>
             </nav>
         </div>
     </header>
@@ -926,11 +931,6 @@
                                     <select id="preferredBranch" name="preferredBranch"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F91D7C] focus:border-transparent"
                                         required>
-                                        <option value="" disabled selected>Preferred Branch</option>
-                                        <option value="Main Branch">Main Branch</option>
-                                        <option value="North Branch">North Branch</option>
-                                        <option value="East Branch">East Branch</option>
-                                        <option value="South Branch">South Branch</option>
                                     </select>
                                 </div>
                                 <div>
@@ -998,6 +998,24 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             console.log('DOM loaded - setting up mobile menu');
+
+            fetch('/api/branches')  // Changed from '/branches' to '/api/branches'
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const branchSelect = document.getElementById('preferredBranch');
+                        if (branchSelect) {
+                            branchSelect.innerHTML = '<option value="" disabled selected>Select Branch</option>';
+                            data.data.forEach(branch => {
+                                const option = document.createElement('option');
+                                option.value = branch.branch_ID;
+                                option.textContent = branch.name; // Changed from branch_name to name
+                                branchSelect.appendChild(option);
+                            });
+                        }
+                    }
+                })
+                .catch(error => console.error('Error loading branches:', error));
 
             // Get references to DOM elements
             const menuToggle = document.getElementById('menu-toggle');

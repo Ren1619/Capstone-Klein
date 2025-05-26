@@ -2,11 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-// use App\Http\Controllers\AccountController;
-// use App\Http\Controllers\LogController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\SalesController;
-// use App\Http\Controllers\AccountRoleController;
-// use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\AccountRoleController;
+use App\Http\Controllers\BranchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,25 +23,28 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Account routes
+Route::get('accounts/role/{roleId}', [AccountController::class, 'getByRole']);
+Route::get('accounts/branch/{branchId}', [AccountController::class, 'getByBranch']);
+Route::apiResource('accounts', AccountController::class);
 
-// //account routes
-// Route::apiResource('accounts', AccountController::class);
-// Route::get('accounts/role/{roleId}', [AccountController::class, 'getByRole']);
-// Route::get('accounts/branch/{branchId}', [AccountController::class, 'getByBranch']);
+// Account Role routes
+Route::apiResource('roles', AccountRoleController::class);
+Route::get('roles/{id}/accounts', [AccountRoleController::class, 'getAccounts']);
 
-// // Account Role routes
-// Route::apiResource('roles', AccountRoleController::class);
-// Route::get('roles/{id}/accounts', [AccountRoleController::class, 'getAccounts']);
+Route::get('branches', [BranchController::class, 'apiIndex']);
 
-// // Log routes   
-// Route::get('logs', [LogController::class, 'index']);
-// Route::post('logs', [LogController::class, 'store']);
-// Route::get('logs/{id}', [LogController::class, 'show']);
-// Route::delete('logs/{id}', [LogController::class, 'destroy']);
-// Route::get('logs/account/{accountId}', [LogController::class, 'getByAccount']);
-// Route::get('logs/action/{action}', [LogController::class, 'getByAction']);
-// Route::post('logs/date-range', [LogController::class, 'getByDateRange']);
-// Route::get('logs/summary', [LogController::class, 'getSummary']);
+Route::get('branches/dropdown', [BranchController::class, 'getBranchesForDropdown'])->name('branches.dropdown');
+
+// Log routes   
+Route::get('logs', [LogController::class, 'index']);
+Route::post('logs', [LogController::class, 'store']);
+Route::get('logs/{id}', [LogController::class, 'show']);
+Route::delete('logs/{id}', [LogController::class, 'destroy']);
+Route::get('logs/account/{accountId}', [LogController::class, 'getByAccount']);
+Route::get('logs/action/{action}', [LogController::class, 'getByAction']);
+Route::post('logs/date-range', [LogController::class, 'getByDateRange']);
+Route::get('logs/summary', [LogController::class, 'getSummary']);
 
 // Sales Routes
 Route::prefix('sales')->group(function () {
@@ -68,9 +71,3 @@ Route::prefix('sales')->group(function () {
 Route::get('/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
 
 Route::get('/api/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
-
-// Cart items search routes
-// Route::get('product-cart-items', [SalesController::class, 'searchProductItems']);
-// Route::get('service-cart-items', [SalesController::class, 'searchServiceItems']);
-
-

@@ -55,6 +55,17 @@ class ServiceController extends Controller
 
         return redirect()->route('services.index')->with('success', 'Service created successfully');
     }
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        $service = Service::findOrFail($id);
+        return response()->json($service);
+    }
 
 
     /**
