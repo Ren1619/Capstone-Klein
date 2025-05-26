@@ -8,6 +8,17 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\POSController;
+
+use App\Http\Controllers\Patients\PatientController;
+use App\Http\Controllers\Patients\VisitController;
+use App\Http\Controllers\Patients\AllergyController;
+use App\Http\Controllers\Patients\MedicalConditionController;
+use App\Http\Controllers\Patients\MedicationController;
+use App\Http\Controllers\Patients\VisitServiceController;
+use App\Http\Controllers\Patients\VisitProductController;
+use App\Http\Controllers\Patients\DiagnosisController;
+use App\Http\Controllers\Patients\PrescriptionController;
+
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AccountRoleController;
@@ -17,6 +28,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Models\Sale;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -170,6 +182,68 @@ Route::get('/pos', [POSController::class, 'index']);
 Route::get('/sales/daily', [SalesController::class, 'getDailySales']);
 Route::post('/sales', [SalesController::class, 'store']);
 
+
+Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+
+
+
+
+
+// Patients resource routes
+Route::resource('patients', PatientController::class);
+
+// Custom route for patient details page that was in the original code
+Route::get('/patientsDetails/{id?}', [PatientController::class, 'show'])->name('patients.details');
+
+
+// Visit routes
+Route::resource('visits', VisitController::class)->except(['create', 'edit']);
+
+// Patient-specific visit routes that don't fit the resource pattern
+Route::post('/patients/{id}/visits', [VisitController::class, 'store'])->name('visits.store');
+Route::get('/patients/{id}/visits', [VisitController::class, 'getPatientVisits'])->name('patients.visits');
+
+// Medical conditions 
+Route::resource('conditions', MedicalConditionController::class);
+
+// Patient-specific medical condition route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/conditions', [MedicalConditionController::class, 'store'])->name('conditions.store');
+
+// Allergy routes 
+Route::resource('allergies', AllergyController::class);
+
+// Patient-specific allergy route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/allergies', [AllergyController::class, 'store'])->name('allergies.store');
+
+
+
+// Medication routes 
+Route::resource('medications', MedicationController::class);
+
+// Patient-specific medication route that doesn't fit the resource pattern
+Route::post('/patients/{patient}/medications', [MedicationController::class, 'store'])->name('medications.store');
+
+
+
+// Redirects from old URLs to new ones for backward compatibility 
+Route::get('/patientsRecord', function () {
+    return redirect()->route('patients.index');
+});
+
+
+// Prescription routes
+Route::resource('prescriptions', PrescriptionController::class);
+
+// Visit services routes
+Route::resource('visit-services', VisitServiceController::class);
+
+// Visit product routes
+Route::resource('visit-products', VisitProductController::class);
+
+// Diagnosis routes
+Route::resource('diagnosis', DiagnosisController::class);
+
+
 Route::middleware(['web'])->group(function () {
     Route::post('/api/submit-feedback', [FeedbackController::class, 'submitFeedback']);
     Route::post('/api/validate-appointment-code', [FeedbackController::class, 'validateAppointmentCode']);
@@ -202,3 +276,4 @@ Route::get('/create-dummy-account', function () {
             Password: 00000000<br>
             <strong>IMPORTANT: Delete this route and change this password after login!</strong>";
 });
+

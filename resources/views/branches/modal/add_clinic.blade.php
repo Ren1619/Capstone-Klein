@@ -149,6 +149,31 @@
 </div>
 
 <script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Cache DOM elements for better performance
+    const modal = document.getElementById('clinicModal');
+    const form = document.getElementById('clinicForm');
+    const methodField = document.getElementById('methodField');
+    const closeButtons = document.querySelectorAll('#closeModalBtn, #cancelBtn, #modalBackdrop');
+    
+    // Open modal
+    function openModal(clinicId = null) {
+        resetForm();
+        
+        if (clinicId) {
+            // Edit mode
+            document.getElementById('modalAction').textContent = 'Edit';
+            document.getElementById('submitBtn').textContent = 'Update';
+            document.getElementById('statusFieldContainer').classList.remove('hidden');
+            document.getElementById('clinicId').value = clinicId;
+            
+            // Change form method to PUT for update
+            methodField.innerHTML = '<input type="hidden" name="_method" value="PUT">';
+            form.action = `{{ url('branches') }}/${clinicId}`;
+            
+            // Fetch branch data via AJAX and populate the form
+            fetchBranchData(clinicId);
   // Branch Modal Functions
   let currentBranchId = null;
 

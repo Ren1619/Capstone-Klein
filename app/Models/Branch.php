@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Branch extends Model
 {
@@ -24,4 +25,20 @@ class Branch extends Model
     ];
 
     public $timestamps = true;
+
+    // Clear cache after model changes
+    protected static function booted()
+    {
+        static::created(function () {
+            Cache::forget('all_branches');
+        });
+
+        static::updated(function () {
+            Cache::forget('all_branches');
+        });
+
+        static::deleted(function () {
+            Cache::forget('all_branches');
+        });
+    }
 }
