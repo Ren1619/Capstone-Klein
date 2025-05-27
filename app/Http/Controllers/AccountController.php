@@ -57,6 +57,7 @@ class AccountController extends Controller
      */
     public function store(Request $request)
     {
+        dd(auth()->check(), auth()->user(), session()->all());
         $validator = Validator::make($request->all(), [
             'role_ID' => 'required|exists:accounts_role,role_ID',
             'branch_ID' => 'required|exists:branches,branch_ID',
@@ -206,9 +207,9 @@ class AccountController extends Controller
 
         $account->delete();
 
-        // Log account deletion
+        $user = auth()->user();
         \App\Models\Log::create([
-            'account_ID' => auth()->user()->account_ID,
+            'account_ID' => $user ? $user->account_ID : null,
             'actions' => 'Account Deletion',
             'descriptions' => 'Deleted account: ' . $accountInfo,
             'timestamp' => now(),

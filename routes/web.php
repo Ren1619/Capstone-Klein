@@ -274,3 +274,6 @@ Route::get('/create-dummy-account', function () {
             <strong>IMPORTANT: Delete this route and change this password after login!</strong>";
 });
 
+Route::get('/auth', function () {
+    return auth()->check() ? 'Authenticated' : 'Not Authenticated';
+});
