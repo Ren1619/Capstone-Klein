@@ -33,3 +33,50 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 //     forceTLS: (import.meta.env.VITE_PUSHER_SCHEME ?? 'https') === 'https',
 //     enabledTransports: ['ws', 'wss'],
 // });
+
+/**
+ * Set up CSRF protection for AJAX requests
+ */
+function setupAjaxCsrf() {
+    // Get the CSRF token from the meta tag
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Add the token to all AJAX requests
+    if (window.axios) {
+        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    }
+
+    // For fetch API
+    window.fetchWithCsrf = function (url, options = {}) {
+        // Create default headers if they don't exist
+        if (!options.headers) {
+            options.headers = {};
+        }
+
+        // Add CSRF token header
+        options.headers['X-CSRF-TOKEN'] = token;
+
+        // Set Content-Type if not already set
+        if (!options.headers['Content-Type'] && options.method &&
+            ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+            options.headers['Content-Type'] = 'application/json';
+        }
+
+        // Return the fetch promise
+        return fetch(url, options);
+    };
+
+    // For jQuery (if used)
+    if (window.jQuery) {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': token
+            }
+        });
+    }
+}
+
+// Initialize CSRF protection when DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+    setupAjaxCsrf();
+});

@@ -70,19 +70,34 @@ Route::middleware(['auth'])->group(function () {
         return view('services/services');
     });
 
-    Route::get('/logs', [App\Http\Controllers\LogController::class, 'index'])->name('logs.index');
-
     Route::get('/inventory', function () {
         return view('inventory/inventory');
     });
 
-    Route::get('/staffs', function () {
-        return view('staffs/staffs');
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/staffs', function () {
+            return view('staffs/staffs');
+        });
+
+
+        Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+        Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+        Route::get('/branches/{id}', [BranchController::class, 'show'])->name('branches.show');
+        Route::put('/branches/{id}', [BranchController::class, 'update'])->name('branches.update');
+        Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
+
+        // Account management routes
+        Route::get('/roles', [AccountRoleController::class, 'index'])->name('roles.index');
+
+        // Log routes
+        Route::get('/logs', [App\Http\Controllers\LogController::class, 'index'])->name('logs.index');
+
+        Route::get('/reports', function () {
+            return view('reports/reports');
+        });
     });
 
-    Route::get('/reports', function () {
-        return view('reports/reports');
-    });
+
 
     Route::get('/patientsDetails', function () {
         return view('patients record/patient_detail');
@@ -104,16 +119,6 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
-    //BRANCHES ROUTES
-    Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
-    Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
-    Route::get('/branches/{id}', [BranchController::class, 'show'])->name('branches.show');
-    Route::put('/branches/{id}', [BranchController::class, 'update'])->name('branches.update');
-    Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
-
-
-    Route::get('/roles', [AccountRoleController::class, 'index'])->name('roles.index');
-
     //INVENTORY ROUTES
     Route::get('/inventory', [ProductController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [ProductController::class, 'store'])->name('inventory.store');
@@ -132,13 +137,9 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Feedback Routes
-    Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');
-    Route::post('/feedbacks', [FeedbackController::class, 'store'])->name('feedbacks.store');
+
 
     Route::resource('categories', CategoryController::class);
-
-    Route::get('/api/categories/type/product', [CategoryController::class, 'getProductCategories']);
-    Route::get('/api/categories/type/service', [CategoryController::class, 'getServiceCategories']);
 
     // POS routes
     Route::get('/pos', [POSController::class, 'index']);
@@ -161,10 +162,6 @@ Route::middleware('guest')->group(function () {
 
 
 
-Route::get('/test-branches', function () {
-    $branches = \App\Models\Branch::all();
-    return response()->json($branches);
-});
 
 // Feedback Routes
 Route::get('/feedbacks', [FeedbackController::class, 'index'])->name('feedbacks.index');

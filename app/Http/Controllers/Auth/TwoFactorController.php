@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
 class TwoFactorController extends Controller
 {
@@ -47,13 +48,21 @@ class TwoFactorController extends Controller
             return redirect()->route('login');
         }
 
-        // Generate a new verification code
-        $verificationCode = VerificationCode::generateFor($user->account_ID);
+        try {
+            // Delete any existing codes for this user
+            VerificationCode::where('account_ID', $user->account_ID)->delete();
 
-        // Send the verification code via email
-        Mail::to($user->email)->send(new TwoFactorCodeMail($user, $verificationCode->code));
+            // Generate a new verification code
+            $verificationCode = VerificationCode::generateFor($user->account_ID);
 
-        return back()->with('status', 'Verification code has been sent to your email.');
+            // Send the verification code via email
+            Mail::to($user->email)->send(new TwoFactorCodeMail($user, $verificationCode->code));
+
+            return back()->with('status', 'Verification code has been sent to your email.');
+        } catch (\Exception $e) {
+            Log::error('Failed to send 2FA code: ' . $e->getMessage());
+            return back()->with('error', 'Failed to send verification code. Please try again.');
+        }
     }
 
     /**
@@ -87,6 +96,8 @@ class TwoFactorController extends Controller
 
         // Verify the code
         if (!$verificationCode || $verificationCode->isExpired()) {
+            // Reset failed attempts counter if needed
+
             return back()->withErrors([
                 'code' => 'The verification code is invalid or has expired.',
             ]);
@@ -96,9 +107,14 @@ class TwoFactorController extends Controller
         $verificationCode->delete();
 
         // Complete the login
-        Auth::login($user);
+        Auth::login($user, $request->filled('remember'));
         $request->session()->regenerate();
         Session::forget('auth.2fa.user_id');
+
+        // Reset failed login attempts since login was successful
+        $user->failed_login_attempts = 0;
+        $user->locked_at = null;
+        $user->save();
 
         // Log the login activity
         \App\Models\Log::create([

@@ -2,7 +2,7 @@
 <div id="branchModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
   <div class="flex items-center justify-center min-h-screen px-4">
     <!-- Modal Background Overlay -->
-    <div class="fixed inset-0 bg-black/70 transition-opacity" id="modalOverlay"></div>    <!-- Modal Content -->
+    <div class="fixed inset-0 bg-black/70 transition-opacity" id="modalOverlay"></div> <!-- Modal Content -->
     <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto z-10">
       <!-- Modal Header -->
       <div class="flex items-center justify-between p-6 pb-4">
@@ -84,7 +84,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Operating Hours*</label>
             <div class="grid grid-cols-2 gap-4">
               <!-- Start Time -->
-              <div class="flex items-center gap-2">                <input type="number" id="start_hour" name="start_hour"
+              <div class="flex items-center gap-2"> <input type="number" id="start_hour" name="start_hour"
                   class="w-16 h-12 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-[#F91D7C] text-lg"
                   min="1" max="12" required>
                 <span class="font-bold text-xl">:</span>
@@ -99,7 +99,7 @@
               </div>
 
               <!-- End Time -->
-              <div class="flex items-center gap-2">                <input type="number" id="end_hour" name="end_hour"
+              <div class="flex items-center gap-2"> <input type="number" id="end_hour" name="end_hour"
                   class="w-16 h-12 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-[#F91D7C] text-lg"
                   min="1" max="12" required>
                 <span class="font-bold text-xl">:</span>
@@ -150,32 +150,53 @@
 
 <script>
 
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // Cache DOM elements for better performance
-    const modal = document.getElementById('clinicModal');
-    const form = document.getElementById('clinicForm');
-    const methodField = document.getElementById('methodField');
-    const closeButtons = document.querySelectorAll('#closeModalBtn, #cancelBtn, #modalBackdrop');
-    
-    // Open modal
-    function openModal(clinicId = null) {
-        resetForm();
-        
-        if (clinicId) {
-            // Edit mode
-            document.getElementById('modalAction').textContent = 'Edit';
-            document.getElementById('submitBtn').textContent = 'Update';
-            document.getElementById('statusFieldContainer').classList.remove('hidden');
-            document.getElementById('clinicId').value = clinicId;
-            
-            // Change form method to PUT for update
-            methodField.innerHTML = '<input type="hidden" name="_method" value="PUT">';
-            form.action = `{{ url('branches') }}/${clinicId}`;
-            
-            // Fetch branch data via AJAX and populate the form
-            fetchBranchData(clinicId);
-  // Branch Modal Functions
-  let currentBranchId = null;
+    const modal = document.getElementById('branchModal');
+    const form = document.getElementById('branchForm');
+    const methodField = document.getElementById('formMethod');
+    const closeButtons = document.querySelectorAll('[data-modal-close="branch"]');
+
+    // Branch Modal Functions
+    let currentBranchId = null;
+
+    // Initialize event listeners
+    function initEventListeners() {
+      // Close modal on overlay click
+      document.getElementById('modalOverlay')?.addEventListener('click', closeBranchModal);
+
+      // Close modal on escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          closeBranchModal();
+        }
+      });
+
+      // Format minute inputs
+      ['start_minute', 'end_minute'].forEach(id => {
+        document.getElementById(id)?.addEventListener('blur', function () {
+          if (this.value.length === 1) {
+            this.value = '0' + this.value;
+          }
+        });
+      });
+    }
+
+    // Initialize on page load
+    initEventListeners();
+
+    // Make functions globally accessible
+    window.openBranchModal = openBranchModal;
+    window.openBranchModalDirect = openBranchModalDirect;
+    window.closeBranchModal = closeBranchModal;
+    window.confirmDelete = confirmDelete;
+    window.resetBranchForm = resetBranchForm;
+    window.populateBranchForm = populateBranchForm;
+    window.showBranchModal = function () {
+      document.getElementById('branchModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
+  });
 
   // Open modal for creating new branch
   function openBranchModalDirect() {
@@ -186,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('submitBtn').textContent = 'Add';
     document.getElementById('statusFieldContainer').classList.add('hidden');
     document.getElementById('formMethod').value = 'POST';
-    document.getElementById('branchForm').action = "{{ route('branches.store') }}";
+    document.getElementById('branchForm').action = "/branches"; // Use route function in blade
 
     // Show modal
     document.getElementById('branchModal').classList.remove('hidden');
@@ -195,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Open modal for editing existing branch
   function openBranchModal(branchId) {
-    currentBranchId = branchId;
     resetBranchForm();
 
     // Set to edit mode
@@ -204,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('statusFieldContainer').classList.remove('hidden');
     document.getElementById('formMethod').value = 'PUT';
     document.getElementById('branchForm').action = `/branches/${branchId}`;
+    document.getElementById('branch_id').value = branchId;
 
     // Show modal
     document.getElementById('branchModal').classList.remove('hidden');
@@ -267,68 +288,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Reset form
   function resetBranchForm() {
-    document.getElementById('branchForm').reset();
-    document.getElementById('branch_id').value = '';
-    document.getElementById('start_minute').value = '00';
-    document.getElementById('end_minute').value = '00';
-    currentBranchId = null;
+    const form = document.getElementById('branchForm');
+    if (form) {
+      form.reset();
+      document.getElementById('branch_id').value = '';
+      document.getElementById('start_minute').value = '00';
+      document.getElementById('end_minute').value = '00';
+    }
   }
 
   // Close modal
   function closeBranchModal() {
-    document.getElementById('branchModal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-    resetBranchForm();
+    const modal = document.getElementById('branchModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+      resetBranchForm();
+    }
   }
 
   // Confirmation for delete
   function confirmDelete(branchName) {
     return confirm(`Are you sure you want to delete the branch "${branchName}"?\n\nThis action cannot be undone.`);
   }
-
-  // Initialize on page load
-  document.addEventListener('DOMContentLoaded', function () {
-    // Close modal on overlay click
-    document.getElementById('modalOverlay').addEventListener('click', closeBranchModal);
-
-    // Close modal on escape key
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !document.getElementById('branchModal').classList.contains('hidden')) {
-        closeBranchModal();
-      }
-    });
-
-    // Format minute inputs
-    ['start_minute', 'end_minute'].forEach(id => {
-      document.getElementById(id).addEventListener('blur', function () {
-        if (this.value.length === 1) {
-          this.value = '0' + this.value;
-        }
-      });
-    });
-
-    // Handle real-time search
-    const searchInput = document.getElementById('branchSearchInput');
-    if (searchInput) {
-      let searchTimeout;
-      searchInput.addEventListener('input', function (e) {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          this.form.submit();
-        }, 500);
-      });
-    }
-  });
-
-  // Make functions globally accessible
-  window.openBranchModal = openBranchModal;
-  window.openBranchModalDirect = openBranchModalDirect;
-  window.closeBranchModal = closeBranchModal;
-  window.confirmDelete = confirmDelete;
-  window.resetBranchForm = resetBranchForm;
-  window.populateBranchForm = populateBranchForm;
-  window.showBranchModal = function () {
-    document.getElementById('branchModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  };
 </script>

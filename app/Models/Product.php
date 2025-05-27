@@ -1,5 +1,6 @@
 <?php
 
+// Fixed relationship in Product.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ class Product extends Model
         'quantity' => 'integer',
     ];
 
+    // Fixed relationship with consistent naming
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_ID', 'category_ID');

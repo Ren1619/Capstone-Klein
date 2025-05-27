@@ -69,5 +69,3 @@ Route::prefix('sales')->group(function () {
 });
 
 Route::get('/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
-
-Route::get('/api/feedbacks/{id}', [App\Http\Controllers\FeedbackController::class, 'getFeedback']);
