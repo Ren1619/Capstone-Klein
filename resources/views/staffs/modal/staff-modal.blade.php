@@ -1,7 +1,7 @@
 <div id="staffModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <!-- Modal overlay -->
     <div class="fixed inset-0 bg-black/70 bg-opacity-75 transition-opacity" id="modalOverlay"
-        onclick="closeAllModals()"></div>
+        onclick="closeStaffModal()"></div>
 
     <!-- Modal Content -->
     <div class="flex items-center justify-center min-h-screen p-4">
@@ -12,7 +12,7 @@
                     <span class="text-[#F91D7C]" id="modalAction">Add</span> Staff
                 </h3>
                 <button type="button" class="text-gray-400 hover:text-gray-500" id="closeModalBtn"
-                    onclick="closeStaffModalDirect()">
+                    onclick="closeStaffModal()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -36,9 +36,11 @@
             </div>
 
             <!-- Modal Body -->
-            <form id="staffForm">
+            <form id="staffForm" method="POST" action="/api/accounts">
+                @csrf
                 <!-- Hidden staff ID field for edit mode -->
                 <input type="hidden" id="staffId" name="staffId" value="">
+                <input type="hidden" id="formMethod" name="_method" value="POST">
 
                 <!-- Name Fields -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
@@ -136,7 +138,7 @@
                         <span id="submitBtnText">Add</span>
                         <span id="submitBtnLoading" class="hidden">Saving...</span>
                     </button>
-                    <button type="button" id="cancelBtn" onclick="closeStaffModalDirect()"
+                    <button type="button" id="cancelBtn" onclick="closeStaffModal()"
                         class="bg-black text-white px-8 py-2 rounded font-medium order-1 sm:order-2">
                         Cancel
                     </button>
@@ -150,10 +152,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         let isSubmitting = false;
 
-        // Get CSRF token
+        // Get CSRF token from meta tag
         function getCSRFToken() {
             const metaTag = document.querySelector('meta[name="csrf-token"]');
-            return metaTag ? metaTag.getAttribute('content') : null;
+            if (!metaTag) {
+                console.error('CSRF token meta tag not found');
+                return null;
+            }
+            return metaTag.getAttribute('content');
         }
 
         // Load roles and branches
@@ -161,7 +167,13 @@
             console.log('Loading dropdown data...');
 
             // Load roles
-            fetch('/roles')
+            fetch('/api/roles', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken()
+                }
+            })
                 .then(response => {
                     console.log('Roles response status:', response.status);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -181,29 +193,30 @@
                             });
                             console.log(`Loaded ${data.data.length} roles`);
                         }
-                    } else {
-                        console.error('Roles response not successful:', data);
                     }
                 })
                 .catch(error => {
                     console.error('Error loading roles:', error);
-                    showError('Failed to load roles: ' + error.message);
+                    showError('Failed to load roles');
                 });
 
             // Load branches
-            console.log('Fetching branches from /api/branches/dropdown');
-            fetch('/api/branches/dropdown')
+            fetch('/api/branches/dropdown', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken()
+                }
+            })
                 .then(response => {
-                    console.log('Branches response:', response);
                     console.log('Branches response status:', response.status);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     return response.json();
-                }).then(data => {
+                })
+                .then(data => {
                     console.log('Branches data:', data);
-                    console.log('Branches success status:', data.status);
-                    if (data.success) { // Changed from data.status to data.success
+                    if (data.success) {
                         const branchSelect = document.getElementById('branch');
-                        console.log('Found branch select:', !!branchSelect);
                         if (branchSelect) {
                             branchSelect.innerHTML = '<option value="" disabled selected>Select Branch</option>';
                             data.data.forEach(branch => {
@@ -214,13 +227,11 @@
                             });
                             console.log(`Loaded ${data.data.length} branches`);
                         }
-                    } else {
-                        console.error('Branches response not successful:', data);
                     }
                 })
                 .catch(error => {
                     console.error('Error loading branches:', error);
-                    showError('Failed to load branches: ' + error.message);
+                    showError('Failed to load branches');
                 });
         }
 
@@ -240,14 +251,9 @@
         if (staffForm) {
             staffForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-
-                if (isSubmitting) {
-                    console.log('Already submitting, ignoring');
-                    return;
+                if (!isSubmitting) {
+                    handleFormSubmit();
                 }
-
-                console.log('Form submitted');
-                handleFormSubmit();
             });
         }
 
@@ -285,8 +291,6 @@
             if (password || !isEditing) {
                 formData.password = password;
             }
-
-            console.log('Form data:', formData);
 
             // Validate required fields
             const requiredFields = ['first_name', 'last_name', 'email', 'role_ID', 'branch_ID', 'contact_number'];
@@ -326,16 +330,19 @@
             const url = isEditing ? `/api/accounts/${staffId}` : '/api/accounts';
             const csrfToken = getCSRFToken();
 
+            if (!csrfToken) {
+                showError('Security token not found. Please refresh the page.');
+                resetSubmitButton();
+                return;
+            }
+
             console.log(`Sending ${method} request to ${url}`);
 
             const headers = {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
             };
-
-            if (csrfToken) {
-                headers['X-CSRF-TOKEN'] = csrfToken;
-            }
 
             fetch(url, {
                 method: method,
@@ -349,17 +356,14 @@
                 .then(({ status, data }) => {
                     console.log('Response data:', data);
 
-                    // Check for successful response
                     if (status >= 200 && status < 300 && data.status === 'success') {
                         showSuccess(data.message || 'Staff saved successfully!');
                         setTimeout(() => {
-                            closeStaffModalDirect();
-                            // Reload the accounts table if function exists
+                            closeStaffModal();
+                            // Reload page or refresh staff data
                             if (typeof loadStaffData === 'function') {
                                 loadStaffData();
-                            }
-                            // Reload the page as fallback
-                            else {
+                            } else {
                                 window.location.reload();
                             }
                         }, 1500);
@@ -393,12 +397,8 @@
             submitBtnLoading.classList.add('hidden');
         }
 
-        // Load data when page loads
-        loadDropdownData();
-
-        // Utility functions
+        // Message functions
         function showError(message) {
-            console.error('Error:', message);
             const container = document.getElementById('messageContainer');
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
@@ -408,7 +408,6 @@
             errorDiv.classList.remove('hidden');
             container.classList.remove('hidden');
 
-            // Auto hide after 5 seconds
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
                 if (successDiv.classList.contains('hidden')) {
@@ -418,7 +417,6 @@
         }
 
         function showSuccess(message) {
-            console.log('Success:', message);
             const container = document.getElementById('messageContainer');
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
@@ -429,111 +427,94 @@
             container.classList.remove('hidden');
         }
 
-        // Make functions globally available
-        window.loadDropdownData = loadDropdownData;
-        window.showError = showError;
-        window.showSuccess = showSuccess;
-    });
+        // Modal control functions
+        function openStaffModal() {
+            const modal = document.getElementById('staffModal');
+            if (modal) {
+                document.getElementById('modalAction').textContent = 'Add';
+                document.getElementById('submitBtnText').textContent = 'Add';
+                document.getElementById('staffId').value = '';
+                document.getElementById('formMethod').value = 'POST';
+                document.getElementById('staffForm').reset();
+                document.getElementById('password').placeholder = 'Enter password';
+                document.getElementById('password').required = true;
+                document.getElementById('messageContainer').classList.add('hidden');
 
-    // Global functions for modal control
-    function openStaffModalDirect() {
-        const modal = document.getElementById('staffModal');
-        if (modal) {
-            const modalAction = document.getElementById('modalAction');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const staffId = document.getElementById('staffId');
-
-            modalAction.textContent = 'Add';
-            submitBtnText.textContent = 'Add';
-            staffId.value = '';
-            document.getElementById('staffForm').reset();
-            document.getElementById('password').placeholder = 'Enter password';
-            document.getElementById('password').required = true;
-
-            // Hide messages
-            document.getElementById('messageContainer').classList.add('hidden');
-
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-
-            // Reload dropdown data
-            if (typeof loadDropdownData === 'function') {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
                 loadDropdownData();
             }
         }
-    }
 
-    function openEditStaffModalDirect(staffId) {
-        const modal = document.getElementById('staffModal');
-        if (modal) {
-            const modalAction = document.getElementById('modalAction');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const staffIdInput = document.getElementById('staffId');
+        function openEditStaffModal(staffId) {
+            const modal = document.getElementById('staffModal');
+            if (modal) {
+                document.getElementById('modalAction').textContent = 'Edit';
+                document.getElementById('submitBtnText').textContent = 'Update';
+                document.getElementById('staffId').value = staffId;
+                document.getElementById('formMethod').value = 'PUT';
+                document.getElementById('messageContainer').classList.add('hidden');
 
-            modalAction.textContent = 'Edit';
-            submitBtnText.textContent = 'Update';
-            staffIdInput.value = staffId;
-
-            // Hide messages
-            document.getElementById('messageContainer').classList.add('hidden');
-
-            // Fetch account data
-            fetch(`/api/accounts/${staffId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        // Populate form
-                        document.getElementById('firstName').value = data.data.first_name || '';
-                        document.getElementById('middleName').value = data.data.middle_name || '';
-                        document.getElementById('lastName').value = data.data.last_name || '';
-                        document.getElementById('email').value = data.data.email || '';
-                        document.getElementById('contactNumber').value = data.data.contact_number
-                            ? data.data.contact_number.replace('+63', '')
-                            : '';
-
-                        // Load dropdowns first, then set values
-                        loadDropdownData();
-                        setTimeout(() => {
-                            document.getElementById('role').value = data.data.role_ID || '';
-                            document.getElementById('branch').value = data.data.branch_ID || '';
-                        }, 500);
-
-                        document.getElementById('password').placeholder = 'Leave blank to keep current password';
-                        document.getElementById('password').required = false;
-                        document.getElementById('password').value = '';
-                    } else {
-                        showError('Failed to load staff data');
+                // Fetch and populate staff data
+                fetch(`/api/accounts/${staffId}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': getCSRFToken()
                     }
                 })
-                .catch(error => {
-                    console.error('Error fetching account:', error);
-                    showError('Failed to load staff data');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            document.getElementById('firstName').value = data.data.first_name || '';
+                            document.getElementById('middleName').value = data.data.middle_name || '';
+                            document.getElementById('lastName').value = data.data.last_name || '';
+                            document.getElementById('email').value = data.data.email || '';
+                            document.getElementById('contactNumber').value = data.data.contact_number
+                                ? data.data.contact_number.replace('+63', '')
+                                : '';
 
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+                            loadDropdownData();
+                            setTimeout(() => {
+                                document.getElementById('role').value = data.data.role_ID || '';
+                                document.getElementById('branch').value = data.data.branch_ID || '';
+                            }, 500);
+
+                            document.getElementById('password').placeholder = 'Leave blank to keep current password';
+                            document.getElementById('password').required = false;
+                            document.getElementById('password').value = '';
+                        } else {
+                            showError('Failed to load staff data');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching account:', error);
+                        showError('Failed to load staff data');
+                    });
+
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         }
-    }
 
-    function closeStaffModalDirect() {
-        const modal = document.getElementById('staffModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+        function closeStaffModal() {
+            const modal = document.getElementById('staffModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                document.getElementById('staffForm').reset();
+                document.getElementById('messageContainer').classList.add('hidden');
+                isSubmitting = false;
+                resetSubmitButton();
+            }
         }
 
-        // Reset the form
-        const form = document.getElementById('staffForm');
-        if (form) {
-            form.reset();
-        }
+        // Make functions globally available
+        window.openStaffModalDirect = openStaffModal;
+        window.openEditStaffModalDirect = openEditStaffModal;
+        window.closeStaffModal = closeStaffModal;
+        window.loadDropdownData = loadDropdownData;
 
-        // Hide messages
-        document.getElementById('messageContainer').classList.add('hidden');
-    }
-
-    // Define closeAllModals for compatibility
-    function closeAllModals() {
-        closeStaffModalDirect();
-    }
+        // Load initial data
+        loadDropdownData();
+    });
 </script>

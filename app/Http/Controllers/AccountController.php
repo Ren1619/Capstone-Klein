@@ -57,7 +57,6 @@ class AccountController extends Controller
      */
     public function store(Request $request)
     {
-        dd(auth()->check(), auth()->user(), session()->all());
         $validator = Validator::make($request->all(), [
             'role_ID' => 'required|exists:accounts_role,role_ID',
             'branch_ID' => 'required|exists:branches,branch_ID',
@@ -89,7 +88,7 @@ class AccountController extends Controller
             \App\Models\Log::create([
                 'account_ID' => auth()->user()->account_ID,
                 'actions' => 'Account Creation',
-                'descriptions' => 'Created new account for: ' . $request->first_name . ' ' . $request->last_name . ' (' . $request->email . ')',
+                'descriptions' => 'Created account: ' . $account->first_name . ' ' . $account->last_name,
                 'timestamp' => now(),
             ]);
         }
@@ -172,11 +171,11 @@ class AccountController extends Controller
         $account->update($updateData);
 
         // Log account update
-        if (!empty($changes)) {
+        if (auth()->check()) {
             \App\Models\Log::create([
                 'account_ID' => auth()->user()->account_ID,
                 'actions' => 'Account Update',
-                'descriptions' => 'Updated account ' . $account->first_name . ' ' . $account->last_name . ': ' . implode(', ', $changes),
+                'descriptions' => 'Updated account: ' . $account->first_name . ' ' . $account->last_name . '. Changes: ' . implode(', ', $changes),
                 'timestamp' => now(),
             ]);
         }
@@ -207,13 +206,14 @@ class AccountController extends Controller
 
         $account->delete();
 
-        $user = auth()->user();
-        \App\Models\Log::create([
-            'account_ID' => $user ? $user->account_ID : null,
-            'actions' => 'Account Deletion',
-            'descriptions' => 'Deleted account: ' . $accountInfo,
-            'timestamp' => now(),
-        ]);
+        if (!empty($changes)) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Account DEletion',
+                'descriptions' => 'Deleted account: ' . $accountInfo,
+                'timestamp' => now(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
