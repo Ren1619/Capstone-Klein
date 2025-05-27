@@ -14,6 +14,16 @@
             font-family: 'Poppins', sans-serif;
         }
     </style>
+    <!-- Pass flash messages to JavaScript -->
+    <script>
+        const flashMessages = {
+            success: "{{ session('success') }}",
+            error: "{{ session('error') }}",
+            warning: "{{ session('warning') }}",
+            info: "{{ session('info') }}"
+        };
+    </script>
+    <script src="{{ asset('js/sweetalert-utils.js') }}"></script>
 </head>
 
 <body class="font-poppins bg-neutral-100">

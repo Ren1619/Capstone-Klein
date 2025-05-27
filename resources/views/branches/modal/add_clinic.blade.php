@@ -18,7 +18,7 @@
 
       <!-- Modal Body -->
       <div class="p-6 pt-2">
-        <form id="branchForm" method="POST" action="{{ route('branches.store') }}">
+        <form id="branchForm" method="POST" action="{{ route('branches.store') }}" class="branch-form">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
           <input type="hidden" id="branch_id" name="branch_id" value="">
@@ -149,7 +149,6 @@
 </div>
 
 <script>
-
   document.addEventListener('DOMContentLoaded', function () {
     // Cache DOM elements for better performance
     const modal = document.getElementById('branchModal');
@@ -179,6 +178,21 @@
             this.value = '0' + this.value;
           }
         });
+      });
+
+      // Setup SweetAlert for form submission
+      setupFormWithSweetAlert('.branch-form', {
+        successMessage: 'Branch saved successfully!',
+        errorMessage: 'Failed to save branch. Please try again.',
+        redirectUrl: null,
+        resetForm: false,
+        successCallback: function () {
+          closeBranchModal();
+          // Reload the page after 1 second to show updated data
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
       });
     }
 
@@ -242,13 +256,13 @@
         if (result.success && result.data) {
           populateBranchForm(result.data);
         } else {
-          alert('Error loading branch data');
+          showError('Error loading branch data');
           closeBranchModal();
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('Error loading branch data');
+        showError('Error loading branch data');
         closeBranchModal();
       });
   }
@@ -309,6 +323,10 @@
 
   // Confirmation for delete
   function confirmDelete(branchName) {
-    return confirm(`Are you sure you want to delete the branch "${branchName}"?\n\nThis action cannot be undone.`);
+    // Use SweetAlert instead of browser confirm
+    confirmDelete(branchName, function () {
+      return true; // Allow the form to submit
+    });
+    return false; // Prevent form submission until SweetAlert confirms
   }
 </script>

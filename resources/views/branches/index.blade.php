@@ -25,29 +25,6 @@
                 </div>
             </div>
 
-            <!-- Alert Messages -->
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('error') }}</span>
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <ul class="list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <!-- Table Content -->
             <div class="flex-1 flex flex-col gap-3 sm:gap-5">
                 <!-- Desktop Table View -->
@@ -82,7 +59,7 @@
                                             <td class="py-3 px-2 text-center">
                                                 <span
                                                     class="inline-block px-2 py-1 rounded-md text-xs font-medium
-                                                            {{ $branch->status == 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                                                                    {{ $branch->status == 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                                     {{ ucfirst($branch->status) }}
                                                 </span>
                                             </td>
@@ -94,7 +71,7 @@
                                                         <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit" class="w-5 h-5">
                                                     </button>
                                                     <form action="{{ route('branches.destroy', $branch->branch_ID) }}" method="POST"
-                                                        class="inline" onsubmit="return confirmDelete('{{ $branch->name }}');">
+                                                        class="inline" data-confirm-delete="{{ $branch->name }}">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit"
@@ -154,7 +131,7 @@
                                     <h3 class="font-medium text-lg">{{ $branch->name }}</h3>
                                     <span
                                         class="inline-block mt-1 px-2 py-1 rounded-md text-xs font-medium
-                                            {{ $branch->status == 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                                            {{ $branch->status == 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                         {{ ucfirst($branch->status) }}
                                     </span>
                                 </div>
@@ -164,7 +141,7 @@
                                         <img src="{{ asset('icons/edit_icon.svg') }}" alt="Edit" class="w-5 h-5">
                                     </button>
                                     <form action="{{ route('branches.destroy', $branch->branch_ID) }}" method="POST"
-                                        class="inline" onsubmit="return confirmDelete('{{ $branch->name }}');">
+                                        class="inline" data-confirm-delete="{{ $branch->name }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800" title="Delete Branch">
@@ -232,7 +209,22 @@
 
 @section('scripts')
     <script>
-        // Additional page-specific scripts can go here if needed
+        // Initialize SweetAlert for delete confirmations
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup delete confirmations
+            document.querySelectorAll('form[data-confirm-delete]').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const branchName = this.getAttribute('data-confirm-delete');
+                    const form = this;
+
+                    confirmDelete(branchName, function () {
+                        form.submit();
+                    });
+                });
+            });
+        });
     </script>
 @endsection
 
