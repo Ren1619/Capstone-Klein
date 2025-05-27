@@ -187,8 +187,9 @@
                 })
                 .catch(error => {
                     console.error('Error loading roles:', error);
-                    showError('Failed to load roles: ' + error.message);                });
-                
+                    showError('Failed to load roles: ' + error.message);
+                });
+
             // Load branches
             console.log('Fetching branches from /api/branches/dropdown');
             fetch('/api/branches/dropdown')
@@ -197,7 +198,7 @@
                     console.log('Branches response status:', response.status);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     return response.json();
-                })                .then(data => {
+                }).then(data => {
                     console.log('Branches data:', data);
                     console.log('Branches success status:', data.status);
                     if (data.success) { // Changed from data.status to data.success
@@ -348,13 +349,14 @@
                 .then(({ status, data }) => {
                     console.log('Response data:', data);
 
+                    // Check for successful response
                     if (status >= 200 && status < 300 && data.status === 'success') {
                         showSuccess(data.message || 'Staff saved successfully!');
                         setTimeout(() => {
                             closeStaffModalDirect();
                             // Reload the accounts table if function exists
-                            if (typeof fetchAccounts === 'function') {
-                                fetchAccounts();
+                            if (typeof loadStaffData === 'function') {
+                                loadStaffData();
                             }
                             // Reload the page as fallback
                             else {

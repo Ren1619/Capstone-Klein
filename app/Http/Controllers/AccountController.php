@@ -84,13 +84,14 @@ class AccountController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Log account creation
-        \App\Models\Log::create([
-            'account_ID' => auth()->user()->account_ID,
-            'actions' => 'Account Creation',
-            'descriptions' => 'Created new account for: ' . $request->first_name . ' ' . $request->last_name . ' (' . $request->email . ')',
-            'timestamp' => now(),
-        ]);
+        if (auth()->check()) {
+            \App\Models\Log::create([
+                'account_ID' => auth()->user()->account_ID,
+                'actions' => 'Account Creation',
+                'descriptions' => 'Created new account for: ' . $request->first_name . ' ' . $request->last_name . ' (' . $request->email . ')',
+                'timestamp' => now(),
+            ]);
+        }
 
         return response()->json([
             'status' => 'success',
